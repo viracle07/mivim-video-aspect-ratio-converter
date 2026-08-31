@@ -6,6 +6,7 @@ import {
   createUserWithEmailAndPassword,
   getAuth,
   onAuthStateChanged,
+  reload,
   sendEmailVerification,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
@@ -53,6 +54,18 @@ export const firebaseAuth = {
     if (!auth) return true;
     await sendPasswordResetEmail(auth, email);
     return true;
+  },
+  async resendVerification() {
+    const { auth } = getFirebaseServices();
+    if (!auth?.currentUser) return true;
+    await sendEmailVerification(auth.currentUser);
+    return true;
+  },
+  async refreshUser() {
+    const { auth } = getFirebaseServices();
+    if (!auth?.currentUser) return null;
+    await reload(auth.currentUser);
+    return auth.currentUser;
   },
   async signOut() {
     const { auth } = getFirebaseServices();

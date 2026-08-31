@@ -27,7 +27,8 @@ export function AuthForm({ mode }) {
       } else if (isSignup) {
         await signup(email, password);
       } else {
-        await login(email, password);
+        const nextPath = new URLSearchParams(window.location.search).get("next") || "/dashboard";
+        await login(email, password, nextPath);
       }
     } catch (error) {
       setMessage(error.message || "Something went wrong.");
@@ -41,7 +42,7 @@ export function AuthForm({ mode }) {
       <CardHeader>
         <h1 className="text-2xl font-semibold">{isSignup ? "Create your account" : mode === "reset" ? "Reset password" : "Welcome back"}</h1>
         <p className="mt-1 text-sm text-ink/60">
-          {isSignup ? "Start your MiVim free trial." : mode === "reset" ? "We will send reset instructions." : "Log in to continue converting videos."}
+          {isSignup ? "Start your MiVim free trial and verify your email." : mode === "reset" ? "We will send reset instructions." : "Log in to continue converting videos."}
         </p>
       </CardHeader>
       <CardContent>

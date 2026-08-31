@@ -4,6 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BarChart3, CreditCard, History, LayoutDashboard, LogOut, Shield, UploadCloud } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { VerificationBanner } from "@/components/auth/verification-banner";
 import { useAuth } from "@/contexts/auth-context";
 import { cn } from "@/lib/utils";
 
@@ -65,7 +66,10 @@ export function AppShell({ children }) {
             </div>
           </div>
         </header>
-        <main className="px-5 py-6 lg:px-8">{children}</main>
+        <main className="px-5 py-6 lg:px-8">
+          <VerificationBanner />
+          {children}
+        </main>
       </div>
     </div>
   );
