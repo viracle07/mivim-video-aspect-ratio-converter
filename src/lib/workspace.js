@@ -1,6 +1,5 @@
-import { conversionJobs } from "@/lib/mock-data";
-
 export const workspaceStorageKey = "mivim-workspace";
+const prototypeJobIds = new Set(["job_1042", "job_1041", "job_1038"]);
 
 function newTrialEnd() {
   return new Date(Date.now() + 14 * 86400000).toISOString();
@@ -17,18 +16,21 @@ export function createWorkspace(user) {
     plan: user?.plan || "trial",
     trialEndsAt: user?.trialEndsAt || newTrialEnd(),
     billingVersion: 1,
+    dataVersion: 1,
     billing: null,
-    jobs: conversionJobs
+    jobs: []
   };
 }
 
 export function migrateWorkspace(workspace) {
-  if (workspace.billingVersion === 1) return workspace;
+  const jobs = workspace.dataVersion === 1 ? workspace.jobs : (workspace.jobs || []).filter((job) => !prototypeJobIds.has(job.id));
   return {
     ...workspace,
     billingVersion: 1,
-    trialEndsAt: workspace.plan === "trial" ? newTrialEnd() : workspace.trialEndsAt,
-    billing: workspace.billing || null
+    dataVersion: 1,
+    trialEndsAt: workspace.billingVersion === 1 ? workspace.trialEndsAt : workspace.plan === "trial" ? newTrialEnd() : workspace.trialEndsAt,
+    billing: workspace.billing || null,
+    jobs
   };
 }
 

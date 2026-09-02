@@ -5,7 +5,8 @@ MiVim is a production-shaped Next.js SaaS application for uploading videos, conv
 ## Stack
 
 - Next.js App Router, React, JavaScript, Tailwind CSS
-- Firebase Authentication, Firestore, Firebase Storage
+- Firebase Authentication with signed server sessions
+- IndexedDB for local workspace and video storage
 - Paystack subscriptions, verification, and signed webhooks
 - Browser-based FFmpeg video processing
 - Protected dashboard, billing, upload, history, and admin areas
@@ -17,6 +18,8 @@ MiVim is a production-shaped Next.js SaaS application for uploading videos, conv
 3. Run locally: `npm run dev`
 4. Open `http://localhost:3000`
 
+Run `npm run build` before deployment. With the app running, `npm run test:smoke` checks the public pages, protected routes, session security, and Paystack webhook guard.
+
 Paystack checkout activates after `PAYSTACK_SECRET_KEY`, `PAYSTACK_PLAN_MONTHLY`, and `PAYSTACK_PLAN_YEARLY` are configured. Amount values use the currency subunit and are verified when supplied.
 
 Create monthly and annual subscription plans in the Paystack dashboard, then add their `PLN_...` codes to `.env.local`. For local tests, use Paystack test keys and test plan codes.
@@ -25,4 +28,6 @@ Set `SESSION_SECRET` to a long random value before production deployment. Produc
 
 ## Deployment
 
-Deploy the Next.js app to Vercel, configure all environment variables, and register `/api/paystack/webhook` as the Paystack webhook URL.
+Deploy the Next.js app to Vercel and configure `SESSION_SECRET`, the Firebase variables, `PAYSTACK_SECRET_KEY`, both Paystack plan codes, and `ADMIN_EMAILS`. Register `https://your-domain.com/api/paystack/webhook` as the webhook URL in Paystack.
+
+Video conversion and storage currently run in each user's browser. This keeps media on-device and avoids a separate media-processing server.

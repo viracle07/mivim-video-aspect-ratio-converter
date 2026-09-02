@@ -34,7 +34,7 @@ export function DashboardOverview() {
       <div className="grid gap-6 xl:grid-cols-[minmax(0,1fr)_22rem]">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between"><h2 className="font-semibold">Recent conversions</h2><Button asChild variant="ghost" size="sm" href="/dashboard/history">View all <ArrowUpRight className="h-4 w-4" /></Button></CardHeader>
-          <CardContent><JobTable jobs={workspace.jobs.slice(0, 3)} /></CardContent>
+          <CardContent>{workspace.jobs.length ? <JobTable jobs={workspace.jobs.slice(0, 3)} /> : <div className="py-10 text-center"><p className="font-medium">No conversions yet</p><p className="mt-2 text-sm text-ink/55">Upload your first video to start building your library.</p><Button asChild href="/dashboard/upload" variant="secondary" className="mt-4"><UploadCloud className="h-4 w-4" />Upload video</Button></div>}</CardContent>
         </Card>
         <Card>
           <CardHeader><h2 className="font-semibold">Workspace status</h2></CardHeader>
