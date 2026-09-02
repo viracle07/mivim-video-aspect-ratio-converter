@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, CreditCard, History, LayoutDashboard, LogOut, Shield, UploadCloud } from "lucide-react";
+import { BarChart3, CreditCard, History, LayoutDashboard, LogOut, Shield, UploadCloud, UserRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { VerificationBanner } from "@/components/auth/verification-banner";
 import { useAuth } from "@/contexts/auth-context";
@@ -13,6 +13,7 @@ const nav = [
   { href: "/dashboard/upload", label: "Upload", icon: UploadCloud },
   { href: "/dashboard/history", label: "History", icon: History },
   { href: "/dashboard/billing", label: "Billing", icon: CreditCard },
+  { href: "/dashboard/account", label: "Account", icon: UserRound },
   { href: "/dashboard/admin", label: "Admin", icon: Shield }
 ];
 
@@ -33,7 +34,7 @@ export function AppShell({ children }) {
         <nav className="mt-8 space-y-1">
           {nav.map((item) => {
             const Icon = item.icon;
-            const active = pathname === item.href;
+            const active = item.href === "/dashboard" ? pathname === item.href : pathname.startsWith(item.href);
             return (
               <Link
                 key={item.href}
@@ -66,10 +67,17 @@ export function AppShell({ children }) {
             </div>
           </div>
         </header>
-        <main className="px-5 py-6 lg:px-8">
+        <main className="px-5 py-6 pb-24 lg:px-8 lg:pb-8">
           <VerificationBanner />
           {children}
         </main>
+        <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-line bg-white px-2 pb-[env(safe-area-inset-bottom)] lg:hidden">
+          {nav.filter((item) => item.label !== "Admin").map((item) => {
+            const Icon = item.icon;
+            const active = item.href === "/dashboard" ? pathname === item.href : pathname.startsWith(item.href);
+            return <Link key={item.href} href={item.href} className={cn("flex min-h-16 flex-col items-center justify-center gap-1 text-xs font-medium", active ? "text-mivim-600" : "text-ink/55")}><Icon className="h-5 w-5" /><span>{item.label}</span></Link>;
+          })}
+        </nav>
       </div>
     </div>
   );
