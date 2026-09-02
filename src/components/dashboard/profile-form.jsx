@@ -8,7 +8,7 @@ import { Input } from "@/components/ui/input";
 import { useWorkspace } from "@/contexts/workspace-context";
 
 export function ProfileForm() {
-  const { workspace, updateProfile } = useWorkspace();
+  const { workspace, updateProfile, cloudStatus } = useWorkspace();
   const [form, setForm] = useState(null);
   const [saved, setSaved] = useState(false);
 
@@ -29,7 +29,7 @@ export function ProfileForm() {
   return (
     <div className="grid gap-6 lg:grid-cols-[minmax(0,1fr)_20rem]">
       <Card>
-        <CardHeader><h2 className="font-semibold">Creator details</h2><p className="mt-1 text-sm text-ink/60">These details personalize your workspace.</p></CardHeader>
+        <CardHeader><div className="flex flex-wrap items-center justify-between gap-2"><div><h2 className="font-semibold">Creator details</h2><p className="mt-1 text-sm text-ink/60">These details personalize your workspace.</p></div><span className="text-xs text-ink/45">{cloudStatus === "synced" ? "Synced to cloud" : cloudStatus === "saving" ? "Syncing..." : cloudStatus === "offline" ? "Saved on this device" : cloudStatus === "local" ? "Local workspace" : "Checking sync..."}</span></div></CardHeader>
         <CardContent>
           <form className="space-y-5" onSubmit={submit}>
             <label className="block text-sm font-medium">Display name<Input className="mt-2" name="displayName" value={form.displayName} onChange={change} required /></label>

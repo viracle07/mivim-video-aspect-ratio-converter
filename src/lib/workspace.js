@@ -17,6 +17,7 @@ export function createWorkspace(user) {
     trialEndsAt: user?.trialEndsAt || newTrialEnd(),
     billingVersion: 1,
     dataVersion: 1,
+    contentUpdatedAt: null,
     billing: null,
     jobs: []
   };
@@ -28,6 +29,7 @@ export function migrateWorkspace(workspace) {
     ...workspace,
     billingVersion: 1,
     dataVersion: 1,
+    contentUpdatedAt: workspace.contentUpdatedAt || null,
     trialEndsAt: workspace.billingVersion === 1 ? workspace.trialEndsAt : workspace.plan === "trial" ? newTrialEnd() : workspace.trialEndsAt,
     billing: workspace.billing || null,
     jobs

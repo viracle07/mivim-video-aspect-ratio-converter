@@ -13,6 +13,7 @@ import {
   signInWithPopup,
   signOut
 } from "firebase/auth";
+import { getFirestore } from "firebase/firestore";
 import { firebaseConfig, hasFirebaseConfig } from "@/lib/env";
 
 export function getFirebaseApp() {
@@ -22,10 +23,11 @@ export function getFirebaseApp() {
 
 export function getFirebaseServices() {
   const app = getFirebaseApp();
-  if (!app) return { app: null, auth: null };
+  if (!app) return { app: null, auth: null, database: null };
   return {
     app,
-    auth: getAuth(app)
+    auth: getAuth(app),
+    database: getFirestore(app)
   };
 }
 

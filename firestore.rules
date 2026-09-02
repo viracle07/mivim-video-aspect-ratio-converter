@@ -10,8 +10,13 @@ service cloud.firestore {
     }
 
     match /users/{userId} {
-      allow read, update: if owns(userId);
-      allow create: if signedIn() && request.auth.uid == userId;
+      allow read: if owns(userId);
+      allow create: if owns(userId)
+        && request.resource.data.keys()
+          .hasOnly(['profile', 'jobs', 'dataVersion', 'contentUpdatedAt', 'syncedAt']);
+      allow update: if owns(userId)
+        && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['profile', 'jobs', 'dataVersion', 'contentUpdatedAt', 'syncedAt']);
     }
 
     match /users/{userId}/conversions/{jobId} {

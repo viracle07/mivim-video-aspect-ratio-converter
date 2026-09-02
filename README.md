@@ -6,7 +6,8 @@ MiVim is a production-shaped Next.js SaaS application for uploading videos, conv
 
 - Next.js App Router, React, JavaScript, Tailwind CSS
 - Firebase Authentication with signed server sessions
-- IndexedDB for local workspace and video storage
+- Firestore sync for profiles and conversion records, with an offline local cache
+- IndexedDB for on-device source and converted video storage
 - Paystack subscriptions, verification, and signed webhooks
 - Browser-based FFmpeg video processing
 - Protected dashboard, billing, upload, history, and admin areas
@@ -30,4 +31,4 @@ Set `SESSION_SECRET` to a long random value before production deployment. Produc
 
 Deploy the Next.js app to Vercel and configure `SESSION_SECRET`, the Firebase variables, `PAYSTACK_SECRET_KEY`, both Paystack plan codes, and `ADMIN_EMAILS`. Register `https://your-domain.com/api/paystack/webhook` as the webhook URL in Paystack.
 
-Video conversion and storage currently run in each user's browser. This keeps media on-device and avoids a separate media-processing server.
+Video conversion and media storage currently run in each user's browser. Profile details and conversion metadata sync through Firestore when Firebase is configured, while video files stay on-device.
