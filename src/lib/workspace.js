@@ -2,6 +2,10 @@ import { conversionJobs } from "@/lib/mock-data";
 
 export const workspaceStorageKey = "mivim-workspace";
 
+function newTrialEnd() {
+  return new Date(Date.now() + 14 * 86400000).toISOString();
+}
+
 export function createWorkspace(user) {
   return {
     profile: {
@@ -11,9 +15,27 @@ export function createWorkspace(user) {
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC"
     },
     plan: user?.plan || "trial",
-    trialEndsAt: user?.trialEndsAt || null,
+    trialEndsAt: user?.trialEndsAt || newTrialEnd(),
+    billingVersion: 1,
+    billing: null,
     jobs: conversionJobs
   };
+}
+
+export function migrateWorkspace(workspace) {
+  if (workspace.billingVersion === 1) return workspace;
+  return {
+    ...workspace,
+    billingVersion: 1,
+    trialEndsAt: workspace.plan === "trial" ? newTrialEnd() : workspace.trialEndsAt,
+    billing: workspace.billing || null
+  };
+}
+
+export function hasWorkspaceAccess(workspace) {
+  if (!workspace) return false;
+  if (["monthly", "yearly"].includes(workspace.plan) && workspace.billing?.status === "active") return true;
+  return workspace.plan === "trial" && new Date(workspace.trialEndsAt).getTime() > Date.now();
 }
 
 export function getWorkspaceStats(workspace) {

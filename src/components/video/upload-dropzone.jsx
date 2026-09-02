@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { useWorkspace } from "@/contexts/workspace-context";
 import { saveSourceVideo } from "@/lib/video-storage";
+import { hasWorkspaceAccess } from "@/lib/workspace";
 
 const acceptedTypes = ["video/mp4", "video/quicktime", "video/webm"];
 const maxBytes = 500 * 1024 * 1024;
@@ -17,7 +18,7 @@ function formatDuration(seconds) {
 
 export function UploadDropzone() {
   const router = useRouter();
-  const { addJob } = useWorkspace();
+  const { addJob, workspace } = useWorkspace();
   const inputRef = useRef(null);
   const [file, setFile] = useState(null);
   const [previewUrl, setPreviewUrl] = useState("");
@@ -57,6 +58,10 @@ export function UploadDropzone() {
 
   async function startUpload() {
     if (!file || !metadata || state === "uploading") return;
+    if (!hasWorkspaceAccess(workspace)) {
+      setMessage("Your trial has ended. Choose a plan from Billing to create new conversions.");
+      return;
+    }
     setState("uploading"); setMessage(""); setProgress(12);
     try {
       const response = await fetch("/api/convert", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ fileName: file.name, ratio, sizeBytes: file.size, ...metadata }) });

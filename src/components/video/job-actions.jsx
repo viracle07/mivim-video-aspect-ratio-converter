@@ -6,9 +6,10 @@ import { Button } from "@/components/ui/button";
 import { useWorkspace } from "@/contexts/workspace-context";
 import { convertVideo } from "@/lib/video-converter";
 import { deleteJobVideos, getConvertedVideo } from "@/lib/video-storage";
+import { hasWorkspaceAccess } from "@/lib/workspace";
 
 export function JobActions({ job }) {
-  const { removeJob, updateJob } = useWorkspace();
+  const { removeJob, updateJob, workspace } = useWorkspace();
   const [busy, setBusy] = useState(false);
   const [error, setError] = useState("");
   const [previewUrl, setPreviewUrl] = useState("");
@@ -16,6 +17,10 @@ export function JobActions({ job }) {
   useEffect(() => () => { if (previewUrl) URL.revokeObjectURL(previewUrl); }, [previewUrl]);
 
   async function processVideo() {
+    if (!hasWorkspaceAccess(workspace)) {
+      setError("Your trial has ended. Choose a plan from Billing to continue converting.");
+      return;
+    }
     setBusy(true); setError("");
     updateJob(job.id, { status: "processing", progress: 1, error: "" });
     try {

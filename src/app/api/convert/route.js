@@ -34,13 +34,5 @@ export async function POST(request) {
     sourceStorage: "indexeddb"
   };
 
-  if (process.env.PROCESSING_SERVICE_URL) {
-    await fetch(process.env.PROCESSING_SERVICE_URL, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(job)
-    });
-  }
-
   return NextResponse.json({ job });
 }

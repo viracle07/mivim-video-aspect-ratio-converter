@@ -18,7 +18,7 @@ export default function AdminPage() {
       <div className="grid gap-4 md:grid-cols-3">
         <Card><CardContent><Users className="mb-3 h-5 w-5 text-mivim-600" /><p className="font-medium">User management</p><p className="mt-1 text-sm text-ink/55">Profiles, roles, trial status.</p></CardContent></Card>
         <Card><CardContent><Database className="mb-3 h-5 w-5 text-coral" /><p className="font-medium">System logs</p><p className="mt-1 text-sm text-ink/55">Upload and worker events.</p></CardContent></Card>
-        <Card><CardContent><Activity className="mb-3 h-5 w-5 text-amber" /><p className="font-medium">Revenue analytics</p><p className="mt-1 text-sm text-ink/55">Stripe plan metrics.</p></CardContent></Card>
+        <Card><CardContent><Activity className="mb-3 h-5 w-5 text-amber" /><p className="font-medium">Revenue analytics</p><p className="mt-1 text-sm text-ink/55">Paystack plan metrics.</p></CardContent></Card>
       </div>
       <Card>
         <CardHeader><h2 className="font-semibold">Admin metrics</h2></CardHeader>

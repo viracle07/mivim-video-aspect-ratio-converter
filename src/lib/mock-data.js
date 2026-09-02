@@ -4,7 +4,7 @@ export const demoUser = {
   email: "victor@example.com",
   emailVerified: true,
   plan: "trial",
-  trialEndsAt: "2026-07-27"
+  trialEndsAt: null
 };
 
 export const conversionJobs = [
@@ -51,14 +51,14 @@ export const plans = [
   {
     id: "monthly",
     name: "Creator Monthly",
-    price: "$19",
+    price: "₦15,000",
     cadence: "month",
     features: ["100 conversions", "10 GB storage", "HD downloads", "Email support"]
   },
   {
     id: "yearly",
     name: "Studio Yearly",
-    price: "$190",
+    price: "₦150,000",
     cadence: "year",
     features: ["1,500 conversions", "100 GB storage", "Priority queue", "Team-ready billing"]
   }

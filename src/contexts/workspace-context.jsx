@@ -2,7 +2,7 @@
 
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/contexts/auth-context";
-import { createWorkspace, workspaceStorageKey } from "@/lib/workspace";
+import { createWorkspace, migrateWorkspace, workspaceStorageKey } from "@/lib/workspace";
 
 const WorkspaceContext = createContext(null);
 
@@ -14,7 +14,9 @@ export function WorkspaceProvider({ children }) {
     if (!user) return;
     const key = `${workspaceStorageKey}:${user.uid}`;
     const stored = window.localStorage.getItem(key);
-    setWorkspace(stored ? JSON.parse(stored) : createWorkspace(user));
+    const nextWorkspace = stored ? migrateWorkspace(JSON.parse(stored)) : createWorkspace(user);
+    window.localStorage.setItem(key, JSON.stringify(nextWorkspace));
+    setWorkspace(nextWorkspace);
   }, [user]);
 
   const changeWorkspace = useCallback((recipe) => {
@@ -36,6 +38,9 @@ export function WorkspaceProvider({ children }) {
     },
     removeJob(jobId) {
       changeWorkspace((current) => ({ ...current, jobs: (current.jobs || []).filter((job) => job.id !== jobId) }));
+    },
+    activatePlan(plan, billing) {
+      changeWorkspace((current) => ({ ...current, plan, billing: { ...billing, status: "active" } }));
     },
     updateProfile(profile) {
       changeWorkspace((current) => ({ ...current, profile: { ...current.profile, ...profile } }));

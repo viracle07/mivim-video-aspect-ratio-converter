@@ -4,21 +4,23 @@ MiVim is a production-shaped Next.js SaaS application for uploading videos, conv
 
 ## Stack
 
-- Next.js App Router, React, TypeScript, Tailwind CSS
+- Next.js App Router, React, JavaScript, Tailwind CSS
 - Firebase Authentication, Firestore, Firebase Storage
-- Stripe checkout and webhooks
-- FFmpeg-compatible processing service integration
+- Paystack subscriptions, verification, and signed webhooks
+- Browser-based FFmpeg video processing
 - Protected dashboard, billing, upload, history, and admin areas
 
 ## Getting Started
 
-1. Install dependencies: `pnpm install`
-2. Copy `.env.example` to `.env.local` and fill in Firebase, Stripe, and processing service values.
-3. Run locally: `pnpm dev`
+1. Install dependencies: `npm install`
+2. Copy `.env.example` to `.env.local` and fill in Firebase and Paystack values.
+3. Run locally: `npm run dev`
 4. Open `http://localhost:3000`
 
-The app includes local-safe fallback behavior for early development. Real Firebase and Stripe features activate when the required environment variables are present.
+Paystack checkout activates after `PAYSTACK_SECRET_KEY`, `PAYSTACK_PLAN_MONTHLY`, and `PAYSTACK_PLAN_YEARLY` are configured. Amount values use the currency subunit and are verified when supplied.
+
+Create monthly and annual subscription plans in the Paystack dashboard, then add their `PLN_...` codes to `.env.local`. For local tests, use Paystack test keys and test plan codes.
 
 ## Deployment
 
-Deploy the Next.js app to Vercel, configure all environment variables, deploy the FFmpeg processing worker to Cloud Run or an equivalent service, then point `PROCESSING_SERVICE_URL` to that worker.
+Deploy the Next.js app to Vercel, configure all environment variables, and register `/api/paystack/webhook` as the Paystack webhook URL.

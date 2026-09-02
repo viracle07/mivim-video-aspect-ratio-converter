@@ -11,13 +11,13 @@ const securityHeaders = [
     key: "Content-Security-Policy",
     value: [
       "default-src 'self'",
-      "script-src 'self' 'unsafe-eval' 'unsafe-inline' https://js.stripe.com",
+      "script-src 'self' 'unsafe-eval' 'unsafe-inline'",
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' blob: data: https:",
       "media-src 'self' blob: https:",
       "worker-src 'self' blob:",
-      "connect-src 'self' https://*.firebaseio.com https://*.googleapis.com https://api.stripe.com",
-      "frame-src https://js.stripe.com https://hooks.stripe.com",
+      "connect-src 'self' https://*.firebaseio.com https://*.googleapis.com",
+      "frame-src 'none'",
       "font-src 'self' data:"
     ].join("; ")
   }
