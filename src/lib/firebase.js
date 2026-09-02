@@ -73,6 +73,10 @@ export const firebaseAuth = {
     await signOut(auth);
     return true;
   },
+  async getIdToken() {
+    const { auth } = getFirebaseServices();
+    return auth?.currentUser ? auth.currentUser.getIdToken() : null;
+  },
   watch(callback) {
     const { auth } = getFirebaseServices();
     if (!auth) {

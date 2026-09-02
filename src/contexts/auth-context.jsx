@@ -7,8 +7,6 @@ import { firebaseAuth } from "@/lib/firebase";
 
 const AuthContext = createContext(null);
 const storageKey = "mivim-user";
-const sessionCookie = "mivim-session=active; path=/; max-age=1209600; SameSite=Lax";
-const expiredSessionCookie = "mivim-session=; path=/; max-age=0; SameSite=Lax";
 
 function normalizeUser(firebaseUser, fallback = {}) {
   const email = firebaseUser?.email || fallback.email || demoUser.email;
@@ -23,14 +21,22 @@ function normalizeUser(firebaseUser, fallback = {}) {
   };
 }
 
-function persistUser(user) {
-  window.localStorage.setItem(storageKey, JSON.stringify(user));
-  document.cookie = sessionCookie;
+async function persistUser(user) {
+  const idToken = await firebaseAuth.getIdToken();
+  const response = await fetch("/api/auth/session", {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ uid: user.uid, email: user.email, idToken })
+  });
+  const result = await response.json();
+  if (!response.ok) throw new Error(result.error || "Your session could not be secured.");
+  const nextUser = { ...user, role: result.role };
+  window.localStorage.setItem(storageKey, JSON.stringify(nextUser));
+  return nextUser;
 }
 
 function clearPersistedUser() {
   window.localStorage.removeItem(storageKey);
-  document.cookie = expiredSessionCookie;
 }
 
 export function AuthProvider({ children }) {
@@ -40,16 +46,18 @@ export function AuthProvider({ children }) {
 
   useEffect(() => {
     const stored = typeof window !== "undefined" ? window.localStorage.getItem(storageKey) : null;
-    if (stored) {
-      setUser(JSON.parse(stored));
-      document.cookie = sessionCookie;
-    }
+    const restorePromise = (async () => {
+      if (!stored) return;
+      const storedUser = JSON.parse(stored);
+      try { setUser(await persistUser(storedUser)); } catch { clearPersistedUser(); }
+    })();
 
-    const unsubscribe = firebaseAuth.watch((firebaseUser) => {
+    const unsubscribe = firebaseAuth.watch(async (firebaseUser) => {
       if (firebaseUser) {
         const nextUser = normalizeUser(firebaseUser);
-        persistUser(nextUser);
-        setUser(nextUser);
+        try { setUser(await persistUser(nextUser)); } catch { setUser(null); }
+      } else {
+        await restorePromise;
       }
       setLoading(false);
     });
@@ -64,22 +72,22 @@ export function AuthProvider({ children }) {
       async login(email, password, nextPath = "/dashboard") {
         const signedIn = await firebaseAuth.signIn(email, password);
         const nextUser = normalizeUser(signedIn, { email, emailVerified: signedIn.emailVerified ?? true });
-        persistUser(nextUser);
-        setUser(nextUser);
+        const sessionUser = await persistUser(nextUser);
+        setUser(sessionUser);
         router.push(nextPath);
       },
       async signup(email, password) {
         const signedUp = await firebaseAuth.signUp(email, password);
         const nextUser = normalizeUser(signedUp, { email, displayName: email.split("@")[0], emailVerified: signedUp.emailVerified ?? false });
-        persistUser(nextUser);
-        setUser(nextUser);
+        const sessionUser = await persistUser(nextUser);
+        setUser(sessionUser);
         router.push("/verify-email");
       },
       async googleLogin() {
         const signedIn = await firebaseAuth.signInWithGoogle();
         const nextUser = normalizeUser(signedIn, { provider: "google", emailVerified: true });
-        persistUser(nextUser);
-        setUser(nextUser);
+        const sessionUser = await persistUser(nextUser);
+        setUser(sessionUser);
         router.push("/dashboard");
       },
       async resetPassword(email) {
@@ -92,12 +100,13 @@ export function AuthProvider({ children }) {
       async refreshUser() {
         const refreshed = await firebaseAuth.refreshUser();
         const nextUser = normalizeUser(refreshed, { ...user, emailVerified: refreshed?.emailVerified ?? user?.emailVerified });
-        persistUser(nextUser);
-        setUser(nextUser);
-        return nextUser;
+        const sessionUser = await persistUser(nextUser);
+        setUser(sessionUser);
+        return sessionUser;
       },
       async logout() {
         await firebaseAuth.signOut();
+        await fetch("/api/auth/session", { method: "DELETE" });
         clearPersistedUser();
         setUser(null);
         router.push("/");

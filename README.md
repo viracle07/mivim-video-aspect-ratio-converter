@@ -21,6 +21,8 @@ Paystack checkout activates after `PAYSTACK_SECRET_KEY`, `PAYSTACK_PLAN_MONTHLY`
 
 Create monthly and annual subscription plans in the Paystack dashboard, then add their `PLN_...` codes to `.env.local`. For local tests, use Paystack test keys and test plan codes.
 
+Set `SESSION_SECRET` to a long random value before production deployment. Production sessions require Firebase authentication, and administrator access is limited to the comma-separated addresses in `ADMIN_EMAILS`.
+
 ## Deployment
 
 Deploy the Next.js app to Vercel, configure all environment variables, and register `/api/paystack/webhook` as the Paystack webhook URL.

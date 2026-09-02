@@ -13,8 +13,13 @@ export async function POST(request) {
   const ip = request.headers.get("x-forwarded-for") || "local";
   if (!rateLimit(`paystack:${ip}`, 8).allowed) return NextResponse.json({ error: "Too many payment attempts." }, { status: 429 });
 
-  const parsed = schema.safeParse(await request.json());
+  let body;
+  try { body = await request.json(); } catch { return NextResponse.json({ error: "Invalid payment request." }, { status: 400 }); }
+  const parsed = schema.safeParse(body);
   if (!parsed.success) return NextResponse.json({ error: "Choose a valid plan and account email." }, { status: 400 });
+  if (request.headers.get("x-mivim-email")?.toLowerCase() !== parsed.data.email.toLowerCase()) {
+    return NextResponse.json({ error: "Payment email must match the signed-in account." }, { status: 403 });
+  }
   if (!hasPaystackConfig(parsed.data.plan)) return NextResponse.json({ error: "Paystack setup is incomplete. Add your secret key and plan codes to .env.local." }, { status: 503 });
 
   try {

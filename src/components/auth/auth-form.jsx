@@ -27,7 +27,8 @@ export function AuthForm({ mode }) {
       } else if (isSignup) {
         await signup(email, password);
       } else {
-        const nextPath = new URLSearchParams(window.location.search).get("next") || "/dashboard";
+        const requestedPath = new URLSearchParams(window.location.search).get("next");
+        const nextPath = requestedPath?.startsWith("/") && !requestedPath.startsWith("//") ? requestedPath : "/dashboard";
         await login(email, password, nextPath);
       }
     } catch (error) {
