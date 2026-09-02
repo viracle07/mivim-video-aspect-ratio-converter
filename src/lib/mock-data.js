@@ -51,14 +51,14 @@ export const plans = [
   {
     id: "monthly",
     name: "Creator Monthly",
-    price: "₦15,000",
+    price: "₦3,700",
     cadence: "month",
     features: ["100 conversions", "10 GB storage", "HD downloads", "Email support"]
   },
   {
     id: "yearly",
     name: "Studio Yearly",
-    price: "₦150,000",
+    price: "₦44,400",
     cadence: "year",
     features: ["1,500 conversions", "100 GB storage", "Priority queue", "Team-ready billing"]
   }

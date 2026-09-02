@@ -14,7 +14,8 @@ export async function GET(request) {
     const plan = getPaystackPlan(planId);
     const planCode = transaction.plan?.plan_code || transaction.plan;
     const validPlan = planCode === plan.code;
-    const expectedAmount = plan.amount || Number(transaction.plan?.amount);
+    const paystackPlan = plan.amount ? null : await paystackRequest(`/plan/${encodeURIComponent(plan.code)}`);
+    const expectedAmount = plan.amount || Number(paystackPlan?.amount);
     const validAmount = Boolean(expectedAmount) && Number(transaction.amount) === expectedAmount;
     if (transaction.status !== "success" || !validPlan || !validAmount) {
       return NextResponse.json({ error: "Payment verification did not match the selected plan." }, { status: 400 });
