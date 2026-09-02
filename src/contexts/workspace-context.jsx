@@ -1,6 +1,6 @@
 "use client";
 
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { useAuth } from "@/contexts/auth-context";
 import { createWorkspace, workspaceStorageKey } from "@/lib/workspace";
 
@@ -17,27 +17,30 @@ export function WorkspaceProvider({ children }) {
     setWorkspace(stored ? JSON.parse(stored) : createWorkspace(user));
   }, [user]);
 
+  const changeWorkspace = useCallback((recipe) => {
+    setWorkspace((current) => {
+      if (!current) return current;
+      const nextWorkspace = recipe(current);
+      window.localStorage.setItem(`${workspaceStorageKey}:${user.uid}`, JSON.stringify(nextWorkspace));
+      return nextWorkspace;
+    });
+  }, [user?.uid]);
+
   const value = useMemo(() => ({
     workspace,
     addJob(job) {
-      const nextWorkspace = { ...workspace, jobs: [job, ...(workspace.jobs || [])] };
-      window.localStorage.setItem(`${workspaceStorageKey}:${user.uid}`, JSON.stringify(nextWorkspace));
-      setWorkspace(nextWorkspace);
-      return nextWorkspace;
+      changeWorkspace((current) => ({ ...current, jobs: [job, ...(current.jobs || [])] }));
     },
     updateJob(jobId, changes) {
-      const nextWorkspace = { ...workspace, jobs: (workspace.jobs || []).map((job) => job.id === jobId ? { ...job, ...changes } : job) };
-      window.localStorage.setItem(`${workspaceStorageKey}:${user.uid}`, JSON.stringify(nextWorkspace));
-      setWorkspace(nextWorkspace);
-      return nextWorkspace;
+      changeWorkspace((current) => ({ ...current, jobs: (current.jobs || []).map((job) => job.id === jobId ? { ...job, ...changes } : job) }));
+    },
+    removeJob(jobId) {
+      changeWorkspace((current) => ({ ...current, jobs: (current.jobs || []).filter((job) => job.id !== jobId) }));
     },
     updateProfile(profile) {
-      const nextWorkspace = { ...workspace, profile: { ...workspace.profile, ...profile } };
-      window.localStorage.setItem(`${workspaceStorageKey}:${user.uid}`, JSON.stringify(nextWorkspace));
-      setWorkspace(nextWorkspace);
-      return nextWorkspace;
+      changeWorkspace((current) => ({ ...current, profile: { ...current.profile, ...profile } }));
     }
-  }), [user, workspace]);
+  }), [changeWorkspace, workspace]);
 
   return <WorkspaceContext.Provider value={value}>{children}</WorkspaceContext.Provider>;
 }

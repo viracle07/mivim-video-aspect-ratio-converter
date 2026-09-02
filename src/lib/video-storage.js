@@ -38,3 +38,17 @@ export function saveConvertedVideo(id, blob) {
 export function getConvertedVideo(id) {
   return getSourceVideo(`output:${id}`);
 }
+
+async function deleteStoredValue(key) {
+  const database = await openDatabase();
+  return new Promise((resolve, reject) => {
+    const transaction = database.transaction(storeName, "readwrite");
+    transaction.objectStore(storeName).delete(key);
+    transaction.oncomplete = () => { database.close(); resolve(); };
+    transaction.onerror = () => reject(transaction.error);
+  });
+}
+
+export async function deleteJobVideos(id) {
+  await Promise.all([deleteStoredValue(id), deleteStoredValue(`output:${id}`)]);
+}
