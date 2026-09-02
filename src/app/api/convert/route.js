@@ -4,7 +4,11 @@ import { rateLimit } from "@/lib/rate-limit";
 
 const schema = z.object({
   fileName: z.string().min(1).max(180),
-  ratio: z.enum(["9:16", "1:1", "16:9", "4:5"])
+  ratio: z.enum(["9:16", "1:1", "16:9", "4:5"]),
+  sizeBytes: z.number().int().positive().max(500 * 1024 * 1024),
+  duration: z.number().nonnegative().max(21600),
+  width: z.number().int().positive().max(16384),
+  height: z.number().int().positive().max(16384)
 });
 
 export async function POST(request) {
@@ -24,7 +28,10 @@ export async function POST(request) {
     id: `job_${crypto.randomUUID()}`,
     status: "queued",
     progress: 0,
-    ...parsed.data
+    ...parsed.data,
+    targetRatio: parsed.data.ratio,
+    createdAt: new Date().toISOString(),
+    sourceStorage: "indexeddb"
   };
 
   if (process.env.PROCESSING_SERVICE_URL) {

@@ -19,6 +19,12 @@ export function WorkspaceProvider({ children }) {
 
   const value = useMemo(() => ({
     workspace,
+    addJob(job) {
+      const nextWorkspace = { ...workspace, jobs: [job, ...(workspace.jobs || [])] };
+      window.localStorage.setItem(`${workspaceStorageKey}:${user.uid}`, JSON.stringify(nextWorkspace));
+      setWorkspace(nextWorkspace);
+      return nextWorkspace;
+    },
     updateProfile(profile) {
       const nextWorkspace = { ...workspace, profile: { ...workspace.profile, ...profile } };
       window.localStorage.setItem(`${workspaceStorageKey}:${user.uid}`, JSON.stringify(nextWorkspace));
