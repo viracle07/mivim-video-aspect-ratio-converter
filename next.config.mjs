@@ -15,6 +15,7 @@ const securityHeaders = [
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' blob: data: https:",
       "media-src 'self' blob: https:",
+      "worker-src 'self' blob:",
       "connect-src 'self' https://*.firebaseio.com https://*.googleapis.com https://api.stripe.com",
       "frame-src https://js.stripe.com https://hooks.stripe.com",
       "font-src 'self' data:"

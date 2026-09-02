@@ -25,6 +25,12 @@ export function WorkspaceProvider({ children }) {
       setWorkspace(nextWorkspace);
       return nextWorkspace;
     },
+    updateJob(jobId, changes) {
+      const nextWorkspace = { ...workspace, jobs: (workspace.jobs || []).map((job) => job.id === jobId ? { ...job, ...changes } : job) };
+      window.localStorage.setItem(`${workspaceStorageKey}:${user.uid}`, JSON.stringify(nextWorkspace));
+      setWorkspace(nextWorkspace);
+      return nextWorkspace;
+    },
     updateProfile(profile) {
       const nextWorkspace = { ...workspace, profile: { ...workspace.profile, ...profile } };
       window.localStorage.setItem(`${workspaceStorageKey}:${user.uid}`, JSON.stringify(nextWorkspace));

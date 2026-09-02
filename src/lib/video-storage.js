@@ -30,3 +30,11 @@ export async function getSourceVideo(id) {
     request.onerror = () => reject(request.error);
   });
 }
+
+export function saveConvertedVideo(id, blob) {
+  return saveSourceVideo(`output:${id}`, blob);
+}
+
+export function getConvertedVideo(id) {
+  return getSourceVideo(`output:${id}`);
+}

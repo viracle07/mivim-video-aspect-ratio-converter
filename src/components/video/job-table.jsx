@@ -1,5 +1,4 @@
-import { Download, LoaderCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
+import { JobActions } from "@/components/video/job-actions";
 
 const statusClass = {
   completed: "bg-mivim-600 text-white",
@@ -32,10 +31,7 @@ export function JobTable({ jobs }) {
             </div>
             <p className="mt-1 text-xs text-ink/55">{job.progress}%</p>
           </div>
-          <Button variant="secondary" size="sm" disabled={job.status !== "completed"} title={job.status !== "completed" ? "Available after conversion" : "Download video"}>
-            {job.status === "completed" ? <Download className="h-4 w-4" /> : <LoaderCircle className="h-4 w-4" />}
-            {job.status === "completed" ? "Download" : "Pending"}
-          </Button>
+          <JobActions job={job} />
         </div>
       ))}
     </div>
