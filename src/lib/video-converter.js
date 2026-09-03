@@ -25,9 +25,10 @@ async function getFFmpeg() {
       ffmpeg.on("log", ({ message }) => {
         if (/error|failed|invalid|unsupported/i.test(message)) latestFFmpegError = message;
       });
+      const origin = window.location.origin;
       await ffmpeg.load({
-        coreURL: "/api/ffmpeg-core/ffmpeg-core.js",
-        wasmURL: "/api/ffmpeg-core/ffmpeg-core.wasm"
+        coreURL: `${origin}/api/ffmpeg-core/ffmpeg-core.js`,
+        wasmURL: `${origin}/api/ffmpeg-core/ffmpeg-core.wasm`
       });
       return ffmpeg;
     })().catch((error) => {
