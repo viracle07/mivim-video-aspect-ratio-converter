@@ -1,6 +1,6 @@
 # MiVim Video Aspect Ratio Converter
 
-MiVim is a production-shaped Next.js SaaS application for uploading videos, converting them to target aspect ratios, tracking conversion history, and managing subscriptions.
+MiVim is a production-shaped Next.js SaaS application for uploading videos, fitting them into target aspect ratios without cropping, tracking conversion history, and managing subscriptions.
 
 ## Stack
 
@@ -10,6 +10,7 @@ MiVim is a production-shaped Next.js SaaS application for uploading videos, conv
 - IndexedDB for on-device source and converted video storage
 - Paystack subscriptions, verification, and signed webhooks
 - Browser-based FFmpeg video processing
+- Adaptive blurred or custom-colour canvases, 720p/1080p quality, and selectable frame rates
 - Protected dashboard, billing, upload, history, and admin areas
 
 ## Getting Started
