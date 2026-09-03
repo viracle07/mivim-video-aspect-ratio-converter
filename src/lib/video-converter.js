@@ -12,6 +12,12 @@ const outputSizes = {
 let ffmpegPromise;
 let latestFFmpegError = "";
 
+export function cancelVideoConversion() {
+  if (!ffmpegPromise) return;
+  ffmpegPromise.then((ffmpeg) => ffmpeg.terminate()).catch(() => {});
+  ffmpegPromise = null;
+}
+
 async function getFFmpeg() {
   if (!ffmpegPromise) {
     ffmpegPromise = (async () => {
@@ -46,11 +52,22 @@ export async function convertVideo(job, onProgress) {
   const inputName = `input-${job.id}.${inputExtension}`;
   const outputName = `mivim-${job.id}.mp4`;
   const [width, height] = outputSizes[job.targetRatio] || outputSizes["9:16"];
-  const progressHandler = ({ progress }) => onProgress(Math.max(1, Math.min(99, Math.round(progress * 100))));
+  let lastReportedProgress = 0;
+  let lastReportedAt = 0;
+  const progressHandler = ({ progress }) => {
+    const nextProgress = Math.max(1, Math.min(99, Math.round(progress * 100)));
+    const now = Date.now();
+    if (nextProgress >= lastReportedProgress + 5 || now - lastReportedAt >= 1000) {
+      lastReportedProgress = nextProgress;
+      lastReportedAt = now;
+      onProgress(nextProgress);
+    }
+  };
 
   ffmpeg.on("progress", progressHandler);
   try {
     await ffmpeg.writeFile(inputName, await fetchFile(source));
+    const timeout = Math.min(30 * 60 * 1000, Math.max(2 * 60 * 1000, Math.ceil((job.duration || 30) * 6000)));
     const exitCode = await ffmpeg.exec([
       "-i", inputName,
       "-map", "0:v:0", "-map", "0:a?",
@@ -58,8 +75,8 @@ export async function convertVideo(job, onProgress) {
       "-c:v", "libx264", "-preset", "ultrafast", "-crf", "23",
       "-c:a", "aac", "-b:a", "128k", "-movflags", "+faststart",
       outputName
-    ]);
-    if (exitCode !== 0) throw new Error(latestFFmpegError || "FFmpeg could not convert this video format.");
+    ], timeout);
+    if (exitCode !== 0) throw new Error(latestFFmpegError || "The conversion timed out. Try a shorter or lower-resolution video.");
     const output = await ffmpeg.readFile(outputName);
     const blob = new Blob([output.buffer], { type: "video/mp4" });
     await saveConvertedVideo(job.id, blob);

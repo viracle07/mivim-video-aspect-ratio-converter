@@ -4,7 +4,7 @@ import { useEffect, useState } from "react";
 import { Download, Eye, LoaderCircle, Play, Trash2, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { useWorkspace } from "@/contexts/workspace-context";
-import { convertVideo } from "@/lib/video-converter";
+import { cancelVideoConversion, convertVideo } from "@/lib/video-converter";
 import { deleteJobVideos, getConvertedVideo } from "@/lib/video-storage";
 import { hasWorkspaceAccess } from "@/lib/workspace";
 
@@ -48,6 +48,13 @@ export function JobActions({ job }) {
     }
   }
 
+  function cancelConversion() {
+    cancelVideoConversion();
+    setBusy(false);
+    setError("Conversion cancelled. You can retry when ready.");
+    updateJob(job.id, { status: "failed", progress: 0, error: "Conversion cancelled. Select Retry to start again." });
+  }
+
   async function deleteJob() {
     if (!window.confirm(`Delete ${job.fileName} and its stored video files?`)) return;
     setBusy(true);
@@ -67,5 +74,5 @@ export function JobActions({ job }) {
   }
 
   if (!job.sourceStorage) return <div className="flex items-center gap-2"><span className="text-xs text-ink/45">Demo job</span>{deleteButton}</div>;
-  return <div><div className="flex gap-2"><Button variant="secondary" size="sm" onClick={processVideo} disabled={busy || job.status === "processing"}>{busy || job.status === "processing" ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}{job.status === "failed" ? "Retry" : job.status === "processing" ? "Converting" : "Convert"}</Button>{deleteButton}</div>{(error || job.error) && <p className="mt-2 max-w-44 text-xs text-coral">{error || job.error}</p>}</div>;
+  return <div><div className="flex gap-2">{busy ? <Button variant="danger" size="sm" onClick={cancelConversion}>Cancel</Button> : <Button variant="secondary" size="sm" onClick={processVideo} disabled={job.status === "processing"}>{job.status === "processing" ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}{job.status === "failed" ? "Retry" : job.status === "processing" ? "Converting" : "Convert"}</Button>}{deleteButton}</div>{(error || job.error) && <p className="mt-2 max-w-44 text-xs text-coral">{error || job.error}</p>}</div>;
 }

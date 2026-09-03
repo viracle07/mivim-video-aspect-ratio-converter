@@ -24,7 +24,13 @@ export function createWorkspace(user) {
 }
 
 export function migrateWorkspace(workspace) {
-  const jobs = workspace.dataVersion === 1 ? workspace.jobs : (workspace.jobs || []).filter((job) => !prototypeJobIds.has(job.id));
+  const storedJobs = workspace.dataVersion === 1 ? (workspace.jobs || []) : (workspace.jobs || []).filter((job) => !prototypeJobIds.has(job.id));
+  const jobs = storedJobs.map((job) => job.status === "processing" ? {
+    ...job,
+    status: "failed",
+    progress: 0,
+    error: "The previous conversion was interrupted. Select Retry to continue."
+  } : job);
   return {
     ...workspace,
     billingVersion: 1,
