@@ -15,7 +15,7 @@ export async function GET(request) {
   if (!asset) return NextResponse.json({ error: "Unknown FFmpeg asset." }, { status: 404 });
 
   try {
-    const filePath = path.join(process.cwd(), "node_modules", "@ffmpeg", "core", "dist", "esm", asset.name);
+    const filePath = path.join(process.cwd(), "node_modules", "@ffmpeg", "core", "dist", "umd", asset.name);
     const body = await readFile(filePath);
     return new NextResponse(body, {
       headers: {
