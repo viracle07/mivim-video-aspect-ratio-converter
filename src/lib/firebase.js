@@ -1,6 +1,6 @@
 "use client";
 
-import { initializeApp, getApps } from "firebase/app";
+import { initializeApp, getApps } from "@firebase/app";
 import {
   GoogleAuthProvider,
   createUserWithEmailAndPassword,
@@ -12,8 +12,8 @@ import {
   signInWithEmailAndPassword,
   signInWithPopup,
   signOut
-} from "firebase/auth";
-import { getFirestore } from "firebase/firestore";
+} from "@firebase/auth";
+import { getFirestore } from "@firebase/firestore";
 import { firebaseConfig, hasFirebaseConfig } from "@/lib/env";
 
 export function getFirebaseApp() {

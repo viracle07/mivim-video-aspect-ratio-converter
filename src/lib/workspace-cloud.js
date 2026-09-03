@@ -1,6 +1,6 @@
 "use client";
 
-import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
+import { doc, getDoc, serverTimestamp, setDoc } from "@firebase/firestore";
 import { getFirebaseServices } from "@/lib/firebase";
 
 function cloudDocument(uid) {
