@@ -6,20 +6,22 @@ export const runtime = "nodejs";
 export const dynamic = "force-dynamic";
 
 const assets = {
-  "ffmpeg-core.js": "text/javascript; charset=utf-8",
-  "ffmpeg-core.wasm": "application/wasm"
+  "ffmpeg-core.js": { file: "ffmpeg-core.js", type: "text/javascript; charset=utf-8" },
+  "ffmpeg-core.wasm": { file: "ffmpeg-core.wasm", type: "application/wasm" },
+  "ffmpeg-core-umd-v1.js": { file: "ffmpeg-core.js", type: "text/javascript; charset=utf-8" },
+  "ffmpeg-core-umd-v1.wasm": { file: "ffmpeg-core.wasm", type: "application/wasm" }
 };
 
 export async function GET(_request, { params }) {
   const { asset } = await params;
-  const type = assets[asset];
-  if (!type) return NextResponse.json({ error: "Unknown FFmpeg asset." }, { status: 404 });
+  const definition = assets[asset];
+  if (!definition) return NextResponse.json({ error: "Unknown FFmpeg asset." }, { status: 404 });
 
   try {
-    const body = await readFile(path.join(process.cwd(), "node_modules", "@ffmpeg", "core", "dist", "umd", asset));
+    const body = await readFile(path.join(process.cwd(), "node_modules", "@ffmpeg", "core", "dist", "umd", definition.file));
     return new NextResponse(body, {
       headers: {
-        "Content-Type": type,
+        "Content-Type": definition.type,
         "Cache-Control": "public, max-age=31536000, immutable"
       }
     });

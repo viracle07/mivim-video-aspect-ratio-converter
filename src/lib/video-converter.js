@@ -27,8 +27,8 @@ async function getFFmpeg() {
       });
       const origin = window.location.origin;
       await ffmpeg.load({
-        coreURL: `${origin}/api/ffmpeg-core/ffmpeg-core.js`,
-        wasmURL: `${origin}/api/ffmpeg-core/ffmpeg-core.wasm`
+        coreURL: `${origin}/api/ffmpeg-core/ffmpeg-core-umd-v1.js`,
+        wasmURL: `${origin}/api/ffmpeg-core/ffmpeg-core-umd-v1.wasm`
       });
       return ffmpeg;
     })().catch((error) => {
