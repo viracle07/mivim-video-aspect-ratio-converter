@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { useAuth } from "@/contexts/auth-context";
+import { hasFirebaseConfig } from "@/lib/env";
 
 export function AuthForm({ mode }) {
   const isSignup = mode === "signup";
@@ -47,6 +48,7 @@ export function AuthForm({ mode }) {
         </p>
       </CardHeader>
       <CardContent>
+        {!hasFirebaseConfig && <p className="mb-4 rounded-md border border-amber/40 bg-amber/15 px-3 py-2 text-sm text-ink/70">Local preview mode is active. Account data stays in this browser until Firebase is connected.</p>}
         <form className="space-y-4" onSubmit={handleSubmit}>
           <label className="block text-sm font-medium">
             Email
@@ -65,7 +67,7 @@ export function AuthForm({ mode }) {
           </Button>
         </form>
         {mode !== "reset" && (
-          <Button className="mt-3 w-full" variant="secondary" onClick={googleLogin}>
+          <Button className="mt-3 w-full" variant="secondary" onClick={googleLogin} disabled={!hasFirebaseConfig} title={!hasFirebaseConfig ? "Connect Firebase to enable Google sign-in" : undefined}>
             <Chrome className="h-4 w-4" />
             Continue with Google
           </Button>

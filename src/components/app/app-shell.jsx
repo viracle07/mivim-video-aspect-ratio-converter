@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, CreditCard, History, LayoutDashboard, LogOut, Shield, UploadCloud, UserRound } from "lucide-react";
+import { BarChart3, CloudOff, CreditCard, History, LayoutDashboard, LogOut, Shield, UploadCloud, UserRound } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { VerificationBanner } from "@/components/auth/verification-banner";
 import { useAuth } from "@/contexts/auth-context";
 import { cn } from "@/lib/utils";
+import { hasFirebaseConfig } from "@/lib/env";
 
 const nav = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -58,6 +59,7 @@ export function AppShell({ children }) {
             <div className="flex items-center gap-3">
               <BarChart3 className="h-5 w-5 text-mivim-600" />
               <span className="font-medium">Creator workspace</span>
+              {!hasFirebaseConfig && <span className="hidden items-center gap-1 text-xs text-ink/45 sm:flex"><CloudOff className="h-3.5 w-3.5" />Local preview</span>}
             </div>
             <div className="flex items-center gap-3">
               <span className="hidden text-sm text-ink/60 sm:inline">{user?.email}</span>

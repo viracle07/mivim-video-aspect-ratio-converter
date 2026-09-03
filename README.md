@@ -20,6 +20,17 @@ MiVim is a production-shaped Next.js SaaS application for uploading videos, fitt
 3. Run locally: `npm run dev`
 4. Open `http://localhost:3000`
 
+## Firebase Setup
+
+1. Create a Firebase project and add a Web app from Project settings.
+2. Enable Email/Password and Google providers under Authentication.
+3. Create a Firestore database and a Firebase Storage bucket.
+4. Add the six Web app configuration values to `.env.local`.
+5. Run `npm run firebase:login`, then `npm run firebase:deploy:rules`.
+6. Restart MiVim after changing `.env.local`.
+
+Without these values, MiVim clearly runs in local preview mode. Real Firebase accounts, Google sign-in, and cross-device Firestore synchronization activate only after setup is complete.
+
 Run `npm run build` before deployment. With the app running, `npm run test:smoke` checks the public pages, protected routes, session security, and Paystack webhook guard.
 
 Paystack checkout activates after `PAYSTACK_SECRET_KEY`, `PAYSTACK_PLAN_MONTHLY`, and `PAYSTACK_PLAN_YEARLY` are configured. Amount values use the currency subunit and are verified when supplied.
