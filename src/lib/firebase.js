@@ -31,56 +31,61 @@ export function getFirebaseServices() {
   };
 }
 
+function getFirebaseAuth() {
+  const app = getFirebaseApp();
+  return app ? getAuth(app) : null;
+}
+
 export const firebaseAuth = {
   async signUp(email, password) {
-    const { auth } = getFirebaseServices();
+    const auth = getFirebaseAuth();
     if (!auth) return { email, displayName: email.split("@")[0], emailVerified: false };
     const credential = await createUserWithEmailAndPassword(auth, email, password);
     await sendEmailVerification(credential.user);
     return credential.user;
   },
   async signIn(email, password) {
-    const { auth } = getFirebaseServices();
+    const auth = getFirebaseAuth();
     if (!auth) return { email, displayName: email.split("@")[0], emailVerified: true };
     const credential = await signInWithEmailAndPassword(auth, email, password);
     return credential.user;
   },
   async signInWithGoogle() {
-    const { auth } = getFirebaseServices();
+    const auth = getFirebaseAuth();
     if (!auth) return { email: "google-user@example.com", displayName: "Google User", emailVerified: true };
     const credential = await signInWithPopup(auth, new GoogleAuthProvider());
     return credential.user;
   },
   async resetPassword(email) {
-    const { auth } = getFirebaseServices();
+    const auth = getFirebaseAuth();
     if (!auth) return true;
     await sendPasswordResetEmail(auth, email);
     return true;
   },
   async resendVerification() {
-    const { auth } = getFirebaseServices();
+    const auth = getFirebaseAuth();
     if (!auth?.currentUser) return true;
     await sendEmailVerification(auth.currentUser);
     return true;
   },
   async refreshUser() {
-    const { auth } = getFirebaseServices();
+    const auth = getFirebaseAuth();
     if (!auth?.currentUser) return null;
     await reload(auth.currentUser);
     return auth.currentUser;
   },
   async signOut() {
-    const { auth } = getFirebaseServices();
+    const auth = getFirebaseAuth();
     if (!auth) return true;
     await signOut(auth);
     return true;
   },
   async getIdToken() {
-    const { auth } = getFirebaseServices();
+    const auth = getFirebaseAuth();
     return auth?.currentUser ? auth.currentUser.getIdToken() : null;
   },
   watch(callback) {
-    const { auth } = getFirebaseServices();
+    const auth = getFirebaseAuth();
     if (!auth) {
       callback(null);
       return () => {};

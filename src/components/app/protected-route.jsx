@@ -16,6 +16,8 @@ export function ProtectedRoute({ children }) {
     return <div className="grid min-h-screen place-items-center bg-mist text-ink/60">Preparing your workspace...</div>;
   }
 
-  if (!user) return null;
+  if (!user) {
+    return <div className="grid min-h-screen place-items-center bg-mist text-ink/60">Taking you to sign in...</div>;
+  }
   return children;
 }

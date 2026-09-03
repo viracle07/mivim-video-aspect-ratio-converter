@@ -52,15 +52,20 @@ export function AuthProvider({ children }) {
       try { setUser(await persistUser(storedUser)); } catch { clearPersistedUser(); }
     })();
 
-    const unsubscribe = firebaseAuth.watch(async (firebaseUser) => {
-      if (firebaseUser) {
-        const nextUser = normalizeUser(firebaseUser);
-        try { setUser(await persistUser(nextUser)); } catch { setUser(null); }
-      } else {
-        await restorePromise;
-      }
-      setLoading(false);
-    });
+    let unsubscribe = () => {};
+    try {
+      unsubscribe = firebaseAuth.watch(async (firebaseUser) => {
+        if (firebaseUser) {
+          const nextUser = normalizeUser(firebaseUser);
+          try { setUser(await persistUser(nextUser)); } catch { setUser(null); }
+        } else {
+          await restorePromise;
+        }
+        setLoading(false);
+      });
+    } catch {
+      restorePromise.finally(() => setLoading(false));
+    }
 
     return unsubscribe;
   }, []);
