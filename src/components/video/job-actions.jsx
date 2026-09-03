@@ -7,6 +7,7 @@ import { useWorkspace } from "@/contexts/workspace-context";
 import { cancelVideoConversion, convertVideo } from "@/lib/video-converter";
 import { deleteJobVideos, getConvertedVideo } from "@/lib/video-storage";
 import { hasWorkspaceAccess } from "@/lib/workspace";
+import { deleteCloudVideo, uploadConvertedVideo } from "@/lib/cloudinary-client";
 
 export function JobActions({ job }) {
   const { removeJob, updateJob, workspace } = useWorkspace();
@@ -25,7 +26,15 @@ export function JobActions({ job }) {
     updateJob(job.id, { status: "processing", progress: 1, error: "" });
     try {
       const result = await convertVideo(job, (progress) => updateJob(job.id, { status: "processing", progress }));
-      updateJob(job.id, { status: "completed", progress: 100, outputStored: true, outputName: result.outputName, outputBytes: result.outputSize, completedAt: new Date().toISOString() });
+      let cloud = null;
+      let cloudError = "";
+      try {
+        cloud = await uploadConvertedVideo(job.id, result.blob);
+      } catch (uploadError) {
+        cloudError = uploadError.message || "Cloud backup was unavailable.";
+      }
+      updateJob(job.id, { status: "completed", progress: 100, outputStored: true, outputName: result.outputName, outputBytes: result.outputSize, cloudUrl: cloud?.url || "", cloudPublicId: cloud?.publicId || "", cloudStatus: cloud ? "stored" : "local", cloudError, completedAt: new Date().toISOString() });
+      if (cloudError) setError(`Conversion completed and is stored on this device. Cloud backup: ${cloudError}`);
     } catch (conversionError) {
       const message = conversionError.message || "Conversion failed.";
       setError(message);
@@ -37,12 +46,12 @@ export function JobActions({ job }) {
 
   async function loadOutput(download) {
     const blob = await getConvertedVideo(job.id);
-    if (!blob) { setError("The converted video is no longer stored in this browser."); return; }
-    const url = URL.createObjectURL(blob);
+    if (!blob && !job.cloudUrl) { setError("The converted video is no longer available on this device or in cloud storage."); return; }
+    const url = blob ? URL.createObjectURL(blob) : job.cloudUrl;
     if (download) {
       const link = document.createElement("a");
-      link.href = url; link.download = job.outputName || "mivim-video.mp4"; link.click();
-      setTimeout(() => URL.revokeObjectURL(url), 1000);
+      link.href = url; link.download = job.outputName || "mivim-video.mp4"; if (!blob) link.target = "_blank"; link.click();
+      if (blob) setTimeout(() => URL.revokeObjectURL(url), 1000);
     } else {
       setPreviewUrl(url);
     }
@@ -59,6 +68,7 @@ export function JobActions({ job }) {
     if (!window.confirm(`Delete ${job.fileName} and its stored video files?`)) return;
     setBusy(true);
     try {
+      if (job.cloudPublicId) await deleteCloudVideo(job.cloudPublicId);
       await deleteJobVideos(job.id);
       removeJob(job.id);
     } catch {

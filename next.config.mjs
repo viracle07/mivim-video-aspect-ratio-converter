@@ -18,7 +18,7 @@ const securityHeaders = [
       "img-src 'self' blob: data: https:",
       "media-src 'self' blob: https:",
       "worker-src 'self' blob:",
-      "connect-src 'self' https://*.firebaseio.com https://*.googleapis.com",
+      "connect-src 'self' https://*.firebaseio.com https://*.googleapis.com https://api.cloudinary.com https://res.cloudinary.com",
       "frame-src 'none'",
       "font-src 'self' data:"
     ].join("; ")

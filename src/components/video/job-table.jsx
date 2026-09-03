@@ -23,6 +23,7 @@ export function JobTable({ jobs }) {
             <p className="font-medium">{job.fileName}</p>
             <p className="text-sm text-ink/55">{new Date(job.createdAt).toLocaleString()} · {job.size}</p>
             {(job.resolution || job.durationLabel) && <p className="mt-1 text-xs text-ink/45">{[job.resolution, job.durationLabel, job.quality || "720p", job.frameRate && job.frameRate !== "original" ? `${job.frameRate} fps` : null].filter(Boolean).join(" · ")}</p>}
+            {job.status === "completed" && <p className="mt-1 text-xs text-ink/45">{job.cloudStatus === "stored" ? "Cloud backup ready" : "Stored on this device"}</p>}
           </div>
           <span className="text-sm">{job.targetRatio}</span>
           <span className={`w-fit rounded-full px-2 py-1 text-xs font-medium ${statusClass[job.status]}`}>{job.status}</span>
