@@ -53,6 +53,9 @@ export async function convertVideo(job, onProgress) {
   const inputName = `input-${job.id}.${inputExtension}`;
   const outputName = `mivim-${job.id}.mp4`;
   const [width, height] = outputSizes[job.targetRatio] || outputSizes["9:16"];
+  const filter = job.fitMode === "solid"
+    ? `color=c=0x101418:s=${width}x${height}[background];[0:v]scale=${width}:${height}:force_original_aspect_ratio=decrease[foreground];[background][foreground]overlay=(W-w)/2:(H-h)/2:shortest=1,setsar=1[video]`
+    : `[0:v]split=2[backgroundSource][foregroundSource];[backgroundSource]scale=${width}:${height}:force_original_aspect_ratio=increase,crop=${width}:${height},boxblur=30:20[background];[foregroundSource]scale=${width}:${height}:force_original_aspect_ratio=decrease[foreground];[background][foreground]overlay=(W-w)/2:(H-h)/2:shortest=1,setsar=1[video]`;
   let lastReportedProgress = 0;
   let lastReportedAt = 0;
   const progressHandler = ({ progress }) => {
@@ -71,8 +74,8 @@ export async function convertVideo(job, onProgress) {
     const timeout = Math.min(30 * 60 * 1000, Math.max(2 * 60 * 1000, Math.ceil((job.duration || 30) * 6000)));
     const exitCode = await ffmpeg.exec([
       "-i", inputName,
-      "-map", "0:v:0", "-map", "0:a?",
-      "-vf", `scale=${width}:${height}:force_original_aspect_ratio=increase,crop=${width}:${height},setsar=1`,
+      "-filter_complex", filter,
+      "-map", "[video]", "-map", "0:a?",
       "-c:v", "libx264", "-preset", "ultrafast", "-crf", "23",
       "-c:a", "aac", "-b:a", "128k", "-movflags", "+faststart",
       outputName

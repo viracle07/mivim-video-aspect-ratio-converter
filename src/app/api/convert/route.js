@@ -5,6 +5,7 @@ import { rateLimit } from "@/lib/rate-limit";
 const schema = z.object({
   fileName: z.string().min(1).max(180),
   ratio: z.enum(["9:16", "1:1", "16:9", "4:5"]),
+  fitMode: z.enum(["blur", "solid"]).default("blur"),
   sizeBytes: z.number().int().positive().max(500 * 1024 * 1024),
   duration: z.number().nonnegative().max(21600),
   width: z.number().int().positive().max(16384),

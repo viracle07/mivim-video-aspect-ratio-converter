@@ -24,6 +24,7 @@ export function UploadDropzone() {
   const [previewUrl, setPreviewUrl] = useState("");
   const [metadata, setMetadata] = useState(null);
   const [ratio, setRatio] = useState("9:16");
+  const [fitMode, setFitMode] = useState("blur");
   const [progress, setProgress] = useState(0);
   const [state, setState] = useState("idle");
   const [message, setMessage] = useState("");
@@ -64,7 +65,7 @@ export function UploadDropzone() {
     }
     setState("uploading"); setMessage(""); setProgress(12);
     try {
-      const response = await fetch("/api/convert", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ fileName: file.name, ratio, sizeBytes: file.size, ...metadata }) });
+      const response = await fetch("/api/convert", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ fileName: file.name, ratio, fitMode, sizeBytes: file.size, ...metadata }) });
       const result = await response.json();
       if (!response.ok) throw new Error(result.error || "The upload could not be started.");
       setProgress(48);
@@ -85,6 +86,7 @@ export function UploadDropzone() {
         <div className="space-y-5">
           <div className="flex items-start justify-between gap-3"><div className="flex min-w-0 items-start gap-3"><FileVideo className="mt-0.5 h-5 w-5 shrink-0 text-coral" /><div className="min-w-0"><p className="truncate font-medium">{file.name}</p><p className="mt-1 text-sm text-ink/55">{fileSize}{metadata ? ` · ${metadata.width} x ${metadata.height} · ${formatDuration(metadata.duration)}` : ""}</p></div></div><button type="button" aria-label="Remove video" title="Remove video" onClick={clearFile} disabled={state === "uploading"} className="grid h-9 w-9 shrink-0 place-items-center rounded-md text-ink/55 hover:bg-mist hover:text-coral disabled:opacity-50"><Trash2 className="h-4 w-4" /></button></div>
           <fieldset><legend className="text-sm font-medium">Output aspect ratio</legend><div className="mt-2 grid grid-cols-4 gap-2">{ratios.map((item) => <button key={item} type="button" onClick={() => setRatio(item)} disabled={state === "uploading" || state === "complete"} className={`h-10 rounded-md border text-sm font-medium transition ${ratio === item ? "border-mivim-600 bg-mivim-600 text-white" : "border-line bg-white hover:bg-mist"}`}>{item}</button>)}</div></fieldset>
+          <fieldset><legend className="text-sm font-medium">Canvas fill</legend><div className="mt-2 grid grid-cols-2 gap-2"><button type="button" onClick={() => setFitMode("blur")} disabled={state === "uploading" || state === "complete"} className={`min-h-14 rounded-md border px-3 text-left text-sm transition ${fitMode === "blur" ? "border-mivim-600 bg-mivim-600/10" : "border-line bg-white hover:bg-mist"}`}><span className="block font-medium">Blurred video</span><span className="text-xs text-ink/55">Fill using video colours</span></button><button type="button" onClick={() => setFitMode("solid")} disabled={state === "uploading" || state === "complete"} className={`min-h-14 rounded-md border px-3 text-left text-sm transition ${fitMode === "solid" ? "border-mivim-600 bg-mivim-600/10" : "border-line bg-white hover:bg-mist"}`}><span className="block font-medium">Clean canvas</span><span className="text-xs text-ink/55">Use a dark background</span></button></div></fieldset>
           <div><div className="flex justify-between text-xs text-ink/55"><span>{state === "uploading" ? "Saving source video" : state === "complete" ? "Upload complete" : "Ready to upload"}</span><span>{progress}%</span></div><div className="mt-2 h-2 rounded bg-mist"><div className="h-2 rounded bg-mivim-600 transition-all" style={{ width: `${progress}%` }} /></div></div>
           {state === "complete" ? <Button className="w-full" onClick={() => router.push("/dashboard/history")}><CheckCircle2 className="h-4 w-4" />View conversion job</Button> : <Button className="w-full" onClick={startUpload} disabled={!metadata || state === "uploading"}>{state === "uploading" || state === "inspecting" ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}{state === "uploading" ? "Uploading..." : state === "inspecting" ? "Inspecting video..." : "Create conversion job"}</Button>}
         </div>
