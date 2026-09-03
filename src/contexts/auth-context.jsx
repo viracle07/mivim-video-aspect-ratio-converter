@@ -4,6 +4,7 @@ import { createContext, useContext, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { demoUser } from "@/lib/mock-data";
 import { firebaseAuth } from "@/lib/firebase";
+import { hasFirebaseConfig } from "@/lib/env";
 
 const AuthContext = createContext(null);
 const storageKey = "mivim-user";
@@ -60,6 +61,11 @@ export function AuthProvider({ children }) {
           try { setUser(await persistUser(nextUser)); } catch { setUser(null); }
         } else {
           await restorePromise;
+          if (hasFirebaseConfig) {
+            await fetch("/api/auth/session", { method: "DELETE" }).catch(() => {});
+            clearPersistedUser();
+            setUser(null);
+          }
         }
         setLoading(false);
       });

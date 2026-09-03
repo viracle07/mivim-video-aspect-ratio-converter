@@ -1,7 +1,6 @@
 import { NextResponse } from "next/server";
 import { verifySessionToken } from "@/lib/session";
 
-const authPaths = ["/login", "/signup", "/reset-password", "/verify-email"];
 const protectedApiPaths = ["/api/convert", "/api/paystack/initialize", "/api/paystack/verify", "/api/cloudinary/signature", "/api/cloudinary/delete"];
 
 function unauthorized(request) {
@@ -24,12 +23,6 @@ export async function middleware(request) {
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard";
     url.searchParams.set("notice", "admin-required");
-    return NextResponse.redirect(url);
-  }
-
-  if (authPaths.includes(pathname) && session && pathname !== "/verify-email") {
-    const url = request.nextUrl.clone();
-    url.pathname = "/dashboard";
     return NextResponse.redirect(url);
   }
 
