@@ -27,8 +27,9 @@ export function JobActions({ job }) {
       const result = await convertVideo(job, (progress) => updateJob(job.id, { status: "processing", progress }));
       updateJob(job.id, { status: "completed", progress: 100, outputStored: true, outputName: result.outputName, outputBytes: result.outputSize, completedAt: new Date().toISOString() });
     } catch (conversionError) {
-      setError(conversionError.message || "Conversion failed.");
-      updateJob(job.id, { status: "failed", progress: 0, error: conversionError.message || "Conversion failed." });
+      const message = conversionError.message || "Conversion failed.";
+      setError(message);
+      updateJob(job.id, { status: "failed", progress: 0, error: message });
     } finally {
       setBusy(false);
     }

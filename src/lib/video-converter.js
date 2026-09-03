@@ -10,14 +10,18 @@ const outputSizes = {
 };
 
 let ffmpegPromise;
+let latestFFmpegError = "";
 
 async function getFFmpeg() {
   if (!ffmpegPromise) {
     ffmpegPromise = (async () => {
       const ffmpeg = new FFmpeg();
+      ffmpeg.on("log", ({ message }) => {
+        if (/error|failed|invalid|unsupported/i.test(message)) latestFFmpegError = message;
+      });
       await ffmpeg.load({
-        coreURL: "/api/ffmpeg-core?asset=js",
-        wasmURL: "/api/ffmpeg-core?asset=wasm"
+        coreURL: "/api/ffmpeg-core/ffmpeg-core.js",
+        wasmURL: "/api/ffmpeg-core/ffmpeg-core.wasm"
       });
       return ffmpeg;
     })().catch((error) => {
@@ -32,7 +36,12 @@ export async function convertVideo(job, onProgress) {
   const source = await getSourceVideo(job.id);
   if (!source) throw new Error("The source video is no longer stored in this browser.");
 
-  const ffmpeg = await getFFmpeg();
+  let ffmpeg;
+  try {
+    ffmpeg = await getFFmpeg();
+  } catch (error) {
+    throw new Error(`The video engine could not start. ${error instanceof Error ? error.message : String(error)}`);
+  }
   const inputExtension = job.fileName.split(".").pop()?.toLowerCase() || "mp4";
   const inputName = `input-${job.id}.${inputExtension}`;
   const outputName = `mivim-${job.id}.mp4`;
@@ -50,7 +59,7 @@ export async function convertVideo(job, onProgress) {
       "-c:a", "aac", "-b:a", "128k", "-movflags", "+faststart",
       outputName
     ]);
-    if (exitCode !== 0) throw new Error("FFmpeg could not convert this video.");
+    if (exitCode !== 0) throw new Error(latestFFmpegError || "FFmpeg could not convert this video format.");
     const output = await ffmpeg.readFile(outputName);
     const blob = new Blob([output.buffer], { type: "video/mp4" });
     await saveConvertedVideo(job.id, blob);

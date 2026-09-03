@@ -8,6 +8,10 @@ async function check(name, path, expectedStatus, options = {}) {
 }
 
 await check("home page", "/", 200);
+const ffmpegJavaScript = await check("FFmpeg JavaScript runtime", "/api/ffmpeg-core/ffmpeg-core.js", 200);
+if (!ffmpegJavaScript.headers.get("content-type")?.includes("text/javascript")) throw new Error("FFmpeg JavaScript runtime returned the wrong content type");
+const ffmpegWasm = await check("FFmpeg WebAssembly runtime", "/api/ffmpeg-core/ffmpeg-core.wasm", 200);
+if (!ffmpegWasm.headers.get("content-type")?.includes("application/wasm")) throw new Error("FFmpeg WebAssembly runtime returned the wrong content type");
 await check("Paystack status", "/api/paystack/status", 200);
 await check("protected dashboard", "/dashboard", 307);
 await check("protected conversion API", "/api/convert", 401, { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
