@@ -50,7 +50,18 @@ export function AuthProvider({ children }) {
     const restorePromise = (async () => {
       if (!stored) return;
       const storedUser = JSON.parse(stored);
-      try { setUser(await persistUser(storedUser)); } catch { clearPersistedUser(); }
+      try {
+        const response = await fetch("/api/auth/session", { cache: "no-store" });
+        const result = await response.json();
+        if (!response.ok || !result.authenticated) throw new Error("Session expired");
+        const nextUser = { ...storedUser, ...result.user };
+        window.localStorage.setItem(storageKey, JSON.stringify(nextUser));
+        setUser(nextUser);
+        return true;
+      } catch {
+        clearPersistedUser();
+        return false;
+      }
     })();
 
     let unsubscribe = () => {};
@@ -60,8 +71,8 @@ export function AuthProvider({ children }) {
           const nextUser = normalizeUser(firebaseUser);
           try { setUser(await persistUser(nextUser)); } catch { setUser(null); }
         } else {
-          await restorePromise;
-          if (hasFirebaseConfig) {
+          const restored = await restorePromise;
+          if (hasFirebaseConfig && !restored) {
             await fetch("/api/auth/session", { method: "DELETE" }).catch(() => {});
             clearPersistedUser();
             setUser(null);
@@ -81,9 +92,15 @@ export function AuthProvider({ children }) {
       user,
       loading,
       async login(email, password, nextPath = "/dashboard") {
-        const signedIn = await firebaseAuth.signIn(email, password);
-        const nextUser = normalizeUser(signedIn, { email, emailVerified: signedIn.emailVerified ?? true });
-        const sessionUser = await persistUser(nextUser);
+        const response = await fetch("/api/auth/login", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email, password })
+        });
+        const signedIn = await response.json();
+        if (!response.ok) throw new Error(signedIn.error || "Login failed.");
+        const sessionUser = normalizeUser(signedIn, signedIn);
+        window.localStorage.setItem(storageKey, JSON.stringify(sessionUser));
         setUser(sessionUser);
         router.push(nextPath);
       },

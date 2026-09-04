@@ -3,6 +3,7 @@ import { z } from "zod";
 import { adminEmails, firebaseConfig, hasFirebaseConfig } from "@/lib/env";
 import { rateLimit } from "@/lib/rate-limit";
 import { createSessionToken, sessionCookieOptions } from "@/lib/session";
+import { verifySessionToken } from "@/lib/session";
 
 const schema = z.object({
   email: z.string().email().max(254),
@@ -49,6 +50,12 @@ export async function POST(request) {
   const response = NextResponse.json({ authenticated: true, role });
   response.cookies.set("mivim-session", token, sessionCookieOptions);
   return response;
+}
+
+export async function GET(request) {
+  const session = await verifySessionToken(request.cookies.get("mivim-session")?.value);
+  if (!session) return NextResponse.json({ authenticated: false }, { status: 401 });
+  return NextResponse.json({ authenticated: true, user: session });
 }
 
 export function DELETE() {
