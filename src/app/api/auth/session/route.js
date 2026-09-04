@@ -12,15 +12,21 @@ const schema = z.object({
 });
 
 async function verifyFirebaseIdentity(idToken) {
-  const response = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${encodeURIComponent(firebaseConfig.apiKey)}`, {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ idToken }),
-    cache: "no-store"
-  });
-  if (!response.ok) return null;
-  const result = await response.json();
-  return result.users?.[0] || null;
+  try {
+    const response = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${encodeURIComponent(firebaseConfig.apiKey)}`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ idToken }),
+      cache: "no-store",
+      signal: AbortSignal.timeout(10000)
+    });
+    if (!response.ok) return null;
+    const result = await response.json();
+    return result.users?.[0] || null;
+  } catch (error) {
+    console.error("Firebase identity verification failed", error.message);
+    throw new Error("Firebase identity verification is temporarily unavailable.");
+  }
 }
 
 export async function POST(request) {
@@ -35,7 +41,9 @@ export async function POST(request) {
   let identity = parsed.data;
   if (hasFirebaseConfig) {
     if (!parsed.data.idToken) return NextResponse.json({ error: "Firebase authentication is required." }, { status: 401 });
-    const verified = await verifyFirebaseIdentity(parsed.data.idToken);
+    let verified;
+    try { verified = await verifyFirebaseIdentity(parsed.data.idToken); }
+    catch (error) { return NextResponse.json({ error: error.message }, { status: 503 }); }
     if (!verified || verified.localId !== parsed.data.uid || verified.email?.toLowerCase() !== parsed.data.email.toLowerCase()) {
       return NextResponse.json({ error: "Authentication could not be verified." }, { status: 401 });
     }

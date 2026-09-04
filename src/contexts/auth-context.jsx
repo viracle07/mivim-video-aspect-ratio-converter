@@ -9,6 +9,7 @@ import { hasFirebaseConfig } from "@/lib/env";
 const AuthContext = createContext(null);
 const storageKey = "mivim-user";
 const authSourceKey = "mivim-auth-source";
+let pendingSession = null;
 
 function normalizeUser(firebaseUser, fallback = {}) {
   const email = firebaseUser?.email || fallback.email || demoUser.email;
@@ -24,17 +25,24 @@ function normalizeUser(firebaseUser, fallback = {}) {
 }
 
 async function persistUser(user) {
-  const idToken = await firebaseAuth.getIdToken();
-  const response = await fetch("/api/auth/session", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ uid: user.uid, email: user.email, idToken })
-  });
-  const result = await response.json();
-  if (!response.ok) throw new Error(result.error || "Your session could not be secured.");
-  const nextUser = { ...user, role: result.role };
-  window.localStorage.setItem(storageKey, JSON.stringify(nextUser));
-  return nextUser;
+  if (pendingSession?.uid === user.uid) return pendingSession.promise;
+  const promise = (async () => {
+    const idToken = await firebaseAuth.getIdToken();
+    const response = await fetch("/api/auth/session", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ uid: user.uid, email: user.email, idToken })
+    });
+    const text = await response.text();
+    let result = {};
+    try { result = text ? JSON.parse(text) : {}; } catch { result = {}; }
+    if (!response.ok) throw new Error(result.error || "The secure session service is unavailable. Please try again.");
+    const nextUser = { ...user, role: result.role };
+    window.localStorage.setItem(storageKey, JSON.stringify(nextUser));
+    return nextUser;
+  })();
+  pendingSession = { uid: user.uid, promise };
+  try { return await promise; } finally { if (pendingSession?.promise === promise) pendingSession = null; }
 }
 
 function clearPersistedUser() {
