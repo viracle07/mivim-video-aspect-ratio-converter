@@ -3,9 +3,9 @@ const config = {
   theme: {
     extend: {
       colors: {
-        ink: "#101418",
-        mist: "#f5f7f8",
-        line: "#d9e0e4",
+        ink: "rgb(var(--ink) / <alpha-value>)",
+        mist: "rgb(var(--mist) / <alpha-value>)",
+        line: "rgb(var(--line) / <alpha-value>)",
         mivim: {
           500: "#14b8a6",
           600: "#0f9488",

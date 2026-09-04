@@ -53,6 +53,50 @@ function customerDocumentUrl(email) {
   return `https://firestore.googleapis.com/v1/projects/${encodeURIComponent(projectId)}/databases/(default)/documents/billingCustomers/${id}`;
 }
 
+function notificationUrl(uid, id, scopeName = "user") {
+  const { projectId } = getAdminConfig();
+  const collection = scopeName === "admin" ? "adminNotifications" : `users/${encodeURIComponent(uid)}/notifications`;
+  const base = `https://firestore.googleapis.com/v1/projects/${encodeURIComponent(projectId)}/databases/(default)/documents/${collection}`;
+  return id ? `${base}/${encodeURIComponent(id)}` : base;
+}
+
+function encodeFields(data) {
+  return Object.fromEntries(Object.entries(data).map(([key, value]) => {
+    if (value === null || value === undefined) return [key, { nullValue: null }];
+    if (typeof value === "boolean") return [key, { booleanValue: value }];
+    if (typeof value === "number") return [key, { integerValue: String(value) }];
+    return [key, key.endsWith("At") ? { timestampValue: value } : { stringValue: String(value) }];
+  }));
+}
+
+export async function createNotification(uid, notification, scopeName = "user") {
+  const token = await getAccessToken();
+  const eventKey = notification.eventKey || crypto.randomUUID();
+  const id = crypto.createHash("sha256").update(`${scopeName}:${uid || "all"}:${eventKey}`).digest("hex").slice(0, 40);
+  const response = await fetch(notificationUrl(uid, id, scopeName), {
+    method: "PATCH",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ fields: encodeFields({ type: notification.type || "update", title: notification.title, message: notification.message, href: notification.href || "", read: false, createdAt: notification.createdAt || new Date().toISOString(), eventKey }) }),
+    cache: "no-store"
+  });
+  if (!response.ok) throw new Error("Notification could not be saved.");
+  return id;
+}
+
+export async function listNotifications(uid, scopeName = "user") {
+  const token = await getAccessToken();
+  const response = await fetch(`${notificationUrl(uid, null, scopeName)}?pageSize=50&orderBy=createdAt%20desc`, { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" });
+  if (!response.ok) return [];
+  const result = await response.json();
+  return (result.documents || []).map((document) => ({ id: document.name.split("/").pop(), scope: scopeName, ...Object.fromEntries(Object.entries(document.fields || {}).map(([key, value]) => [key, decodeValue(value)])) }));
+}
+
+export async function markNotificationRead(uid, id, scopeName = "user") {
+  const token = await getAccessToken();
+  const response = await fetch(`${notificationUrl(uid, id, scopeName)}?updateMask.fieldPaths=read`, { method: "PATCH", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, body: JSON.stringify({ fields: { read: { booleanValue: true } } }), cache: "no-store" });
+  if (!response.ok) throw new Error("Notification could not be updated.");
+}
+
 function decodeDocument(document) {
   const fields = document?.fields || {};
   return {

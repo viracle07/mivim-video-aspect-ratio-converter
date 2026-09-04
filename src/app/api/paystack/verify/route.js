@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getPaystackPlan, paystackRequest } from "@/lib/paystack";
-import { activatePaidEntitlement, indexBillingCustomer } from "@/lib/firebase-admin-rest";
+import { activatePaidEntitlement, createNotification, getEntitlement, indexBillingCustomer } from "@/lib/firebase-admin-rest";
 
 const referenceSchema = z.string().regex(/^[A-Za-z0-9.=-]+$/).max(120);
 
@@ -32,6 +32,12 @@ export async function GET(request) {
       subscriptionCode: transaction.subscription?.subscription_code || transaction.subscription || ""
     });
     await indexBillingCustomer(sessionEmail, uid);
+    const entitlement = await getEntitlement(uid);
+    const amount = new Intl.NumberFormat("en-NG", { style: "currency", currency: "NGN" }).format(transaction.amount / 100);
+    await Promise.all([
+      createNotification(uid, { eventKey: `payment:${transaction.reference}`, type: "payment", title: "Subscription active", message: `Your ${planId} plan is active. ${amount} was received and access runs until ${new Date(entitlement.expiresAt).toLocaleDateString("en-NG")}.`, href: "/dashboard/billing" }),
+      createNotification(null, { eventKey: `payment:${transaction.reference}`, type: "payment", title: "Payment received", message: `${sessionEmail} paid ${amount} for the ${planId} plan.`, href: "/dashboard/admin" }, "admin")
+    ]);
 
     return NextResponse.json({
       verified: true,

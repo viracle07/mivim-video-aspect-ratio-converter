@@ -8,6 +8,8 @@ import { VerificationBanner } from "@/components/auth/verification-banner";
 import { useAuth } from "@/contexts/auth-context";
 import { cn } from "@/lib/utils";
 import { hasFirebaseConfig } from "@/lib/env";
+import { NotificationMenu } from "@/components/app/notification-menu";
+import { ThemeControl } from "@/components/app/theme-control";
 
 const nav = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -62,6 +64,8 @@ export function AppShell({ children }) {
               {!hasFirebaseConfig && <span className="hidden items-center gap-1 text-xs text-ink/45 sm:flex"><CloudOff className="h-3.5 w-3.5" />Local preview</span>}
             </div>
             <div className="flex items-center gap-3">
+              <ThemeControl compact />
+              <NotificationMenu />
               <span className="hidden text-sm text-ink/60 sm:inline">{user?.email}</span>
               <Button variant="secondary" size="sm" onClick={logout}>
                 <LogOut className="h-4 w-4" />

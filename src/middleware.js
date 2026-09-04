@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { verifySessionToken } from "@/lib/session";
 
-const protectedApiPaths = ["/api/convert", "/api/paystack/initialize", "/api/paystack/verify", "/api/cloudinary/signature", "/api/cloudinary/delete", "/api/admin"];
+const protectedApiPaths = ["/api/convert", "/api/paystack/initialize", "/api/paystack/verify", "/api/cloudinary/signature", "/api/cloudinary/delete", "/api/admin", "/api/notifications"];
 
 function unauthorized(request) {
   if (request.nextUrl.pathname.startsWith("/api/")) return NextResponse.json({ error: "Authentication required." }, { status: 401 });

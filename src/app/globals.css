@@ -4,8 +4,20 @@
 
 :root {
   color-scheme: light;
-  background: #f5f7f8;
-  color: #101418;
+  --ink: 16 20 24;
+  --mist: 245 247 248;
+  --line: 217 224 228;
+  --surface: 255 255 255;
+  background: rgb(var(--mist));
+  color: rgb(var(--ink));
+}
+
+html[data-theme="dark"] {
+  color-scheme: dark;
+  --ink: 235 241 242;
+  --mist: 15 20 23;
+  --line: 52 64 69;
+  --surface: 24 31 35;
 }
 
 * {
@@ -15,9 +27,15 @@
 body {
   margin: 0;
   min-height: 100vh;
-  background: #f5f7f8;
+  background: rgb(var(--mist));
+  color: rgb(var(--ink));
   font-family: Arial, Helvetica, sans-serif;
 }
+
+.bg-white { background-color: rgb(var(--surface)); }
+.bg-white\/92 { background-color: rgb(var(--surface) / 0.92); }
+html[data-theme="dark"] .shadow-sm,
+html[data-theme="dark"] .shadow-soft { box-shadow: 0 12px 36px rgb(0 0 0 / 0.28); }
 
 button,
 input,
