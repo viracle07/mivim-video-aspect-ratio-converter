@@ -37,7 +37,7 @@ export async function POST(request) {
   }
 
   const email = firebaseResult.email.toLowerCase();
-  const role = process.env.NODE_ENV !== "production" || adminEmails.includes(email) ? "admin" : "user";
+  const role = adminEmails.includes(email) ? "admin" : "user";
   const token = await createSessionToken({ uid: firebaseResult.localId, email, role });
   const response = NextResponse.json({ uid: firebaseResult.localId, email, emailVerified: firebaseResult.emailVerified, role });
   response.cookies.set("mivim-session", token, sessionCookieOptions);

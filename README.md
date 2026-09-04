@@ -16,6 +16,7 @@ MiVim is a production-shaped Next.js SaaS application for uploading videos, fitt
 - Three free video uploads per account, enforced server-side with Firestore
 - Server-verified paid conversion access tied to the signed-in Paystack customer
 - Paystack renewal, failed-invoice, non-renewing, and cancellation lifecycle sync
+- Platform admin dashboard for users, subscriptions, usage, access controls, and audit logs
 
 ## Getting Started
 

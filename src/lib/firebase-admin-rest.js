@@ -1,7 +1,7 @@
 import crypto from "node:crypto";
 
 const tokenUrl = "https://oauth2.googleapis.com/token";
-const scope = "https://www.googleapis.com/auth/datastore";
+const scope = "https://www.googleapis.com/auth/cloud-platform";
 let cachedToken = null;
 
 function base64Url(value) {
@@ -172,6 +172,105 @@ export async function updateEntitlementStatus(uid, status, details = {}) {
     if (![409, 412].includes(response.status)) throw new Error("Subscription status could not be saved.");
   }
   throw new Error("Subscription status changed. Please retry.");
+}
+
+function decodeValue(value) {
+  if (!value) return null;
+  if ("stringValue" in value) return value.stringValue;
+  if ("integerValue" in value) return Number(value.integerValue);
+  if ("doubleValue" in value) return Number(value.doubleValue);
+  if ("booleanValue" in value) return value.booleanValue;
+  if ("timestampValue" in value) return value.timestampValue;
+  if ("nullValue" in value) return null;
+  if (value.arrayValue) return (value.arrayValue.values || []).map(decodeValue);
+  if (value.mapValue) return Object.fromEntries(Object.entries(value.mapValue.fields || {}).map(([key, item]) => [key, decodeValue(item)]));
+  return null;
+}
+
+export async function listPlatformUsers() {
+  const token = await getAccessToken();
+  const { projectId } = getAdminConfig();
+  const [workspaceResponse, authResponse] = await Promise.all([
+    fetch(`https://firestore.googleapis.com/v1/projects/${encodeURIComponent(projectId)}/databases/(default)/documents/users?pageSize=100`, { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" }),
+    fetch(`https://identitytoolkit.googleapis.com/v1/projects/${encodeURIComponent(projectId)}/accounts:batchGet?maxResults=1000`, { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" })
+  ]);
+  if (!workspaceResponse.ok) throw new Error("User workspaces could not be loaded.");
+  if (!authResponse.ok) throw new Error("Firebase Authentication users could not be loaded.");
+  const workspaceResult = await workspaceResponse.json();
+  const authResult = await authResponse.json();
+  const workspaces = new Map((workspaceResult.documents || []).map((document) => {
+    const uid = document.name.split("/").pop();
+    return [uid, { document, data: Object.fromEntries(Object.entries(document.fields || {}).map(([key, value]) => [key, decodeValue(value)])) }];
+  }));
+  return Promise.all((authResult.users || []).map(async (account) => {
+    const uid = account.localId;
+    const stored = workspaces.get(uid);
+    const workspace = stored?.data || {};
+    const entitlement = await getEntitlement(uid);
+    const jobs = Array.isArray(workspace.jobs) ? workspace.jobs : [];
+    return {
+      uid,
+      email: account.email || workspace.profile?.email || "",
+      displayName: account.displayName || workspace.profile?.displayName || "Creator",
+      emailVerified: Boolean(account.emailVerified),
+      disabled: Boolean(account.disabled),
+      createdAt: account.createdAt ? new Date(Number(account.createdAt)).toISOString() : null,
+      lastLoginAt: account.lastLoginAt ? new Date(Number(account.lastLoginAt)).toISOString() : null,
+      plan: entitlement.plan,
+      status: entitlement.status,
+      freeUploadsUsed: entitlement.freeUploadsUsed,
+      expiresAt: entitlement.expiresAt,
+      conversions: jobs.length,
+      completed: jobs.filter((job) => job.status === "completed").length,
+      failed: jobs.filter((job) => job.status === "failed").length,
+      updatedAt: workspace.contentUpdatedAt || stored?.document.updateTime || null
+    };
+  }));
+}
+
+export async function setAdminEntitlement(uid, action, plan) {
+  const current = await getEntitlement(uid);
+  if (action === "suspend") return updateEntitlementStatus(uid, "suspended");
+  if (action === "reactivate") {
+    const paid = ["monthly", "yearly"].includes(current.plan) && new Date(current.expiresAt).getTime() > Date.now();
+    return updateEntitlementStatus(uid, paid ? "active" : "trial");
+  }
+  if (action === "reset-free-uploads") {
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      const latest = await getEntitlement(uid);
+      const response = await writeEntitlement(uid, { ...latest, freeUploadsUsed: 0 }, latest.updateTime);
+      if (response.ok) return true;
+      if (![409, 412].includes(response.status)) throw new Error("Free uploads could not be reset.");
+    }
+  }
+  if (action === "grant-plan" && ["monthly", "yearly"].includes(plan)) {
+    return activatePaidEntitlement(uid, plan, `admin:${crypto.randomUUID()}`, new Date().toISOString());
+  }
+  throw new Error("Invalid administrator action.");
+}
+
+export async function writeAdminLog(actor, action, targetUid, details = {}) {
+  const token = await getAccessToken();
+  const { projectId } = getAdminConfig();
+  const response = await fetch(`https://firestore.googleapis.com/v1/projects/${encodeURIComponent(projectId)}/databases/(default)/documents/adminLogs`, {
+    method: "POST",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ fields: {
+      actor: { stringValue: actor }, action: { stringValue: action }, targetUid: { stringValue: targetUid },
+      details: { stringValue: JSON.stringify(details) }, createdAt: { timestampValue: new Date().toISOString() }
+    } }),
+    cache: "no-store"
+  });
+  if (!response.ok) throw new Error("Admin audit log could not be saved.");
+}
+
+export async function listAdminLogs() {
+  const token = await getAccessToken();
+  const { projectId } = getAdminConfig();
+  const response = await fetch(`https://firestore.googleapis.com/v1/projects/${encodeURIComponent(projectId)}/databases/(default)/documents/adminLogs?pageSize=50&orderBy=createdAt%20desc`, { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" });
+  if (!response.ok) return [];
+  const result = await response.json();
+  return (result.documents || []).map((document) => Object.fromEntries(Object.entries(document.fields || {}).map(([key, value]) => [key, decodeValue(value)])));
 }
 
 export async function deleteEntitlement(uid) {

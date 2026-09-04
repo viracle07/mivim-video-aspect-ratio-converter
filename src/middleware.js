@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { verifySessionToken } from "@/lib/session";
 
-const protectedApiPaths = ["/api/convert", "/api/paystack/initialize", "/api/paystack/verify", "/api/cloudinary/signature", "/api/cloudinary/delete"];
+const protectedApiPaths = ["/api/convert", "/api/paystack/initialize", "/api/paystack/verify", "/api/cloudinary/signature", "/api/cloudinary/delete", "/api/admin"];
 
 function unauthorized(request) {
   if (request.nextUrl.pathname.startsWith("/api/")) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
@@ -19,7 +19,8 @@ export async function middleware(request) {
   const needsSession = pathname.startsWith("/dashboard") || protectedApiPaths.some((path) => pathname.startsWith(path));
 
   if (needsSession && !session && !legacyDevelopmentSession) return unauthorized(request);
-  if (pathname.startsWith("/dashboard/admin") && !legacyDevelopmentSession && session?.role !== "admin") {
+  if ((pathname.startsWith("/dashboard/admin") || pathname.startsWith("/api/admin")) && !legacyDevelopmentSession && session?.role !== "admin") {
+    if (pathname.startsWith("/api/")) return NextResponse.json({ error: "Administrator access required." }, { status: 403 });
     const url = request.nextUrl.clone();
     url.pathname = "/dashboard";
     url.searchParams.set("notice", "admin-required");

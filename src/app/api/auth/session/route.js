@@ -45,7 +45,7 @@ export async function POST(request) {
   }
 
   const email = identity.email.toLowerCase();
-  const role = process.env.NODE_ENV !== "production" || adminEmails.includes(email) ? "admin" : "user";
+  const role = adminEmails.includes(email) ? "admin" : "user";
   const token = await createSessionToken({ uid: identity.uid, email, role });
   const response = NextResponse.json({ authenticated: true, role });
   response.cookies.set("mivim-session", token, sessionCookieOptions);
