@@ -6,7 +6,8 @@ import { createSessionToken, sessionCookieOptions } from "@/lib/session";
 
 const schema = z.object({
   email: z.string().email().max(254),
-  password: z.string().min(8).max(200)
+  password: z.string().min(8).max(200),
+  admin: z.boolean().optional().default(false)
 });
 
 export async function POST(request) {
@@ -24,7 +25,7 @@ export async function POST(request) {
   const firebaseResponse = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:signInWithPassword?key=${encodeURIComponent(firebaseConfig.apiKey)}`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ ...parsed.data, returnSecureToken: true }),
+    body: JSON.stringify({ email: parsed.data.email, password: parsed.data.password, returnSecureToken: true }),
     cache: "no-store"
   });
   const firebaseResult = await firebaseResponse.json();
@@ -38,6 +39,9 @@ export async function POST(request) {
 
   const email = firebaseResult.email.toLowerCase();
   const role = adminEmails.includes(email) ? "admin" : "user";
+  if (parsed.data.admin && role !== "admin") {
+    return NextResponse.json({ error: "These credentials do not have administrator access." }, { status: 403 });
+  }
   const token = await createSessionToken({ uid: firebaseResult.localId, email, role });
   const response = NextResponse.json({ uid: firebaseResult.localId, email, emailVerified: firebaseResult.emailVerified, role });
   response.cookies.set("mivim-session", token, sessionCookieOptions);

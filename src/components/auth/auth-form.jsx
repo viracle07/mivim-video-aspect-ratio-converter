@@ -11,6 +11,7 @@ import { hasFirebaseConfig } from "@/lib/env";
 
 export function AuthForm({ mode }) {
   const isSignup = mode === "signup";
+  const isAdmin = mode === "admin";
   const { login, signup, googleLogin, resetPassword } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -30,7 +31,7 @@ export function AuthForm({ mode }) {
       } else {
         const requestedPath = new URLSearchParams(window.location.search).get("next");
         const nextPath = requestedPath?.startsWith("/") && !requestedPath.startsWith("//") ? requestedPath : "/dashboard";
-        await login(email, password, nextPath);
+        await login(email, password, isAdmin ? "/dashboard/admin" : nextPath, isAdmin);
       }
     } catch (error) {
       setMessage(error.message || "Something went wrong.");
@@ -58,9 +59,9 @@ export function AuthForm({ mode }) {
   return (
     <Card className="mx-auto w-full max-w-md">
       <CardHeader>
-        <h1 className="text-2xl font-semibold">{isSignup ? "Create your account" : mode === "reset" ? "Reset password" : "Welcome back"}</h1>
+        <h1 className="text-2xl font-semibold">{isSignup ? "Create your account" : mode === "reset" ? "Reset password" : isAdmin ? "Administrator sign in" : "Welcome back"}</h1>
         <p className="mt-1 text-sm text-ink/60">
-          {isSignup ? "Start your MiVim free trial and verify your email." : mode === "reset" ? "We will send reset instructions." : "Log in to continue converting videos."}
+          {isSignup ? "Start your MiVim free trial and verify your email." : mode === "reset" ? "We will send reset instructions." : isAdmin ? "Access MiVim platform operations." : "Log in to continue converting videos."}
         </p>
       </CardHeader>
       <CardContent>
@@ -79,20 +80,20 @@ export function AuthForm({ mode }) {
           {message && <p className="rounded-md bg-amber/20 px-3 py-2 text-sm text-ink/75">{message}</p>}
           <Button className="w-full" disabled={busy}>
             <Mail className="h-4 w-4" />
-            {busy ? "Working..." : isSignup ? "Create account" : mode === "reset" ? "Send reset email" : "Log in"}
+            {busy ? "Working..." : isSignup ? "Create account" : mode === "reset" ? "Send reset email" : isAdmin ? "Sign in as administrator" : "Log in"}
           </Button>
         </form>
-        {mode !== "reset" && (
+        {mode !== "reset" && !isAdmin && (
           <Button className="mt-3 w-full" variant="secondary" onClick={handleGoogleLogin} disabled={!hasFirebaseConfig || busy} title={!hasFirebaseConfig ? "Connect Firebase to enable Google sign-in" : undefined}>
             <Chrome className="h-4 w-4" />
             Continue with Google
           </Button>
         )}
         <div className="mt-5 flex justify-between text-sm">
-          <Link className="text-mivim-600" href={isSignup ? "/login" : "/signup"}>
-            {isSignup ? "Already have an account?" : "Create account"}
+          <Link className="text-mivim-600" href={isSignup ? "/login" : isAdmin ? "/login" : "/signup"}>
+            {isSignup ? "Already have an account?" : isAdmin ? "Creator sign in" : "Create account"}
           </Link>
-          {mode !== "reset" && (
+          {mode !== "reset" && !isAdmin && (
             <Link className="text-ink/60" href="/reset-password">
               Forgot password?
             </Link>

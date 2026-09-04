@@ -44,5 +44,5 @@ export async function middleware(request) {
 }
 
 export const config = {
-  matcher: ["/dashboard/:path*", "/login", "/signup", "/reset-password", "/verify-email", "/api/:path*"]
+  matcher: ["/dashboard/:path*", "/login", "/admin-login", "/signup", "/reset-password", "/verify-email", "/api/:path*"]
 };
