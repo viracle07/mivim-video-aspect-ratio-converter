@@ -2,7 +2,17 @@
 
 import { createContext, useContext, useEffect, useState } from "react";
 
-const ThemeContext = createContext(null);
+const fallbackTheme = {
+  theme: "system",
+  setTheme(value) {
+    if (typeof window === "undefined") return;
+    localStorage.setItem("mivim-theme", value);
+    document.documentElement.dataset.theme = value === "system"
+      ? (window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light")
+      : value;
+  }
+};
+const ThemeContext = createContext(fallbackTheme);
 
 export function ThemeProvider({ children }) {
   const [theme, setThemeState] = useState("system");
@@ -33,7 +43,5 @@ export function ThemeProvider({ children }) {
 }
 
 export function useTheme() {
-  const value = useContext(ThemeContext);
-  if (!value) throw new Error("useTheme must be used inside ThemeProvider.");
-  return value;
+  return useContext(ThemeContext);
 }
