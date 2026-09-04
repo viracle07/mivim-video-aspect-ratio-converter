@@ -10,6 +10,7 @@ const schema = z.object({
 });
 
 export async function POST(request) {
+  const uid = request.headers.get("x-mivim-user");
   const ip = request.headers.get("x-forwarded-for") || "local";
   if (!rateLimit(`paystack:${ip}`, 8).allowed) return NextResponse.json({ error: "Too many payment attempts." }, { status: 429 });
 
@@ -34,7 +35,7 @@ export async function POST(request) {
         plan: plan.code,
         amount,
         callback_url: `${appUrl}/dashboard/billing`,
-        metadata: { mivim_plan: plan.id, cancel_action: `${appUrl}/dashboard/billing?payment=cancelled` }
+        metadata: { mivim_uid: uid, mivim_plan: plan.id, cancel_action: `${appUrl}/dashboard/billing?payment=cancelled` }
       })
     });
     return NextResponse.json({ authorizationUrl: data.authorization_url, reference: data.reference });

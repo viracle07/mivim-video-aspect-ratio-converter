@@ -47,6 +47,12 @@ function workspaceDocumentUrl(uid) {
   return `https://firestore.googleapis.com/v1/projects/${encodeURIComponent(projectId)}/databases/(default)/documents/users/${encodeURIComponent(uid)}`;
 }
 
+function customerDocumentUrl(email) {
+  const { projectId } = getAdminConfig();
+  const id = crypto.createHash("sha256").update(email.trim().toLowerCase()).digest("hex");
+  return `https://firestore.googleapis.com/v1/projects/${encodeURIComponent(projectId)}/databases/(default)/documents/billingCustomers/${id}`;
+}
+
 function decodeDocument(document) {
   const fields = document?.fields || {};
   return {
@@ -54,6 +60,8 @@ function decodeDocument(document) {
     status: fields.status?.stringValue || "trial",
     freeUploadsUsed: Number(fields.freeUploadsUsed?.integerValue || 0),
     paymentReference: fields.paymentReference?.stringValue || "",
+    customerCode: fields.customerCode?.stringValue || "",
+    subscriptionCode: fields.subscriptionCode?.stringValue || "",
     expiresAt: fields.expiresAt?.timestampValue || null,
     updatedAt: fields.updatedAt?.timestampValue || null,
     updateTime: document?.updateTime || null
@@ -90,6 +98,8 @@ async function writeEntitlement(uid, entitlement, updateTime) {
     status: { stringValue: entitlement.status },
     freeUploadsUsed: { integerValue: String(entitlement.freeUploadsUsed || 0) },
     paymentReference: { stringValue: entitlement.paymentReference || "" },
+    customerCode: { stringValue: entitlement.customerCode || "" },
+    subscriptionCode: { stringValue: entitlement.subscriptionCode || "" },
     expiresAt: entitlement.expiresAt ? { timestampValue: entitlement.expiresAt } : { nullValue: null },
     updatedAt: { timestampValue: new Date().toISOString() }
   };
@@ -102,7 +112,7 @@ async function writeEntitlement(uid, entitlement, updateTime) {
 export async function consumeConversionAccess(uid) {
   for (let attempt = 0; attempt < 3; attempt += 1) {
     const current = await getEntitlement(uid);
-    if (["monthly", "yearly"].includes(current.plan) && current.status === "active" && new Date(current.expiresAt).getTime() > Date.now()) {
+    if (["monthly", "yearly"].includes(current.plan) && ["active", "non-renewing", "attention"].includes(current.status) && new Date(current.expiresAt).getTime() > Date.now()) {
       return { allowed: true, paid: true, freeUploadsUsed: current.freeUploadsUsed };
     }
     if (current.freeUploadsUsed >= 3) return { allowed: false, paid: false, freeUploadsUsed: current.freeUploadsUsed };
@@ -114,18 +124,54 @@ export async function consumeConversionAccess(uid) {
   throw new Error("Account usage changed. Please try again.");
 }
 
-export async function activatePaidEntitlement(uid, plan, paymentReference, paidAt) {
+export async function activatePaidEntitlement(uid, plan, paymentReference, paidAt, details = {}) {
   const paidDate = new Date(paidAt);
   const expiresAt = new Date(paidDate);
   if (plan === "yearly") expiresAt.setUTCFullYear(expiresAt.getUTCFullYear() + 1);
   else expiresAt.setUTCMonth(expiresAt.getUTCMonth() + 1);
   for (let attempt = 0; attempt < 3; attempt += 1) {
     const current = await getEntitlement(uid);
-    const response = await writeEntitlement(uid, { ...current, plan, status: "active", paymentReference, expiresAt: expiresAt.toISOString() }, current.updateTime);
+    const response = await writeEntitlement(uid, { ...current, ...details, plan, status: "active", paymentReference, expiresAt: details.expiresAt || expiresAt.toISOString() }, current.updateTime);
     if (response.ok) return true;
     if (![409, 412].includes(response.status)) throw new Error("Subscription access could not be saved.");
   }
   throw new Error("Subscription access changed. Please verify again.");
+}
+
+export async function indexBillingCustomer(email, uid) {
+  const token = await getAccessToken();
+  const response = await fetch(customerDocumentUrl(email), {
+    method: "PATCH",
+    headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
+    body: JSON.stringify({ fields: { uid: { stringValue: uid }, email: { stringValue: email.toLowerCase() }, updatedAt: { timestampValue: new Date().toISOString() } } }),
+    cache: "no-store"
+  });
+  if (!response.ok) throw new Error("Billing customer could not be indexed.");
+}
+
+export async function findBillingUser(email) {
+  if (!email) return null;
+  const token = await getAccessToken();
+  const response = await fetch(customerDocumentUrl(email), { headers: { Authorization: `Bearer ${token}` }, cache: "no-store" });
+  if (!response.ok) return null;
+  const document = await response.json();
+  return document.fields?.uid?.stringValue || null;
+}
+
+export async function deleteBillingCustomer(email) {
+  const token = await getAccessToken();
+  const response = await fetch(customerDocumentUrl(email), { method: "DELETE", headers: { Authorization: `Bearer ${token}` }, cache: "no-store" });
+  if (!response.ok && response.status !== 404) throw new Error("Billing customer index could not be deleted.");
+}
+
+export async function updateEntitlementStatus(uid, status, details = {}) {
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const current = await getEntitlement(uid);
+    const response = await writeEntitlement(uid, { ...current, ...details, status }, current.updateTime);
+    if (response.ok) return true;
+    if (![409, 412].includes(response.status)) throw new Error("Subscription status could not be saved.");
+  }
+  throw new Error("Subscription status changed. Please retry.");
 }
 
 export async function deleteEntitlement(uid) {

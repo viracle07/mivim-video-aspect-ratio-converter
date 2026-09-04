@@ -42,6 +42,21 @@ export function BillingPanel() {
       .finally(() => setBusyPlan(""));
   }, [activatePlan, router, searchParams, workspace]);
 
+  useEffect(() => {
+    const reference = workspace?.billing?.reference;
+    const activePlan = ["monthly", "yearly"].includes(workspace?.plan) && workspace?.billing?.status === "active";
+    if (!activePlan || !reference || searchParams.get("reference") || searchParams.get("trxref") || verifyingReference.current === reference) return;
+    verifyingReference.current = reference;
+    fetch(`/api/paystack/verify?reference=${encodeURIComponent(reference)}`)
+      .then(async (response) => {
+        const result = await response.json();
+        if (!response.ok) throw new Error(result.error || "Existing payment could not be synchronized.");
+        activatePlan(result.plan, { ...workspace.billing, reference: result.reference, paidAt: result.paidAt, customerCode: result.customerCode });
+      })
+      .catch(() => {})
+      .finally(() => { verifyingReference.current = ""; });
+  }, [activatePlan, searchParams, workspace]);
+
   async function choosePlan(plan) {
     setBusyPlan(plan); setMessage("");
     try {

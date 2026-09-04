@@ -1,7 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getPaystackPlan, paystackRequest } from "@/lib/paystack";
-import { activatePaidEntitlement } from "@/lib/firebase-admin-rest";
+import { activatePaidEntitlement, indexBillingCustomer } from "@/lib/firebase-admin-rest";
 
 const referenceSchema = z.string().regex(/^[A-Za-z0-9.=-]+$/).max(120);
 
@@ -26,7 +26,12 @@ export async function GET(request) {
       return NextResponse.json({ error: "Payment verification did not match the selected plan." }, { status: 400 });
     }
 
-    await activatePaidEntitlement(uid, planId, transaction.reference, transaction.paid_at);
+    const customerCode = transaction.customer?.customer_code || "";
+    await activatePaidEntitlement(uid, planId, transaction.reference, transaction.paid_at, {
+      customerCode,
+      subscriptionCode: transaction.subscription?.subscription_code || transaction.subscription || ""
+    });
+    await indexBillingCustomer(sessionEmail, uid);
 
     return NextResponse.json({
       verified: true,
@@ -35,7 +40,7 @@ export async function GET(request) {
       amount: transaction.amount,
       currency: transaction.currency,
       paidAt: transaction.paid_at,
-      customerCode: transaction.customer?.customer_code || null
+      customerCode: customerCode || null
     });
   } catch (error) {
     return NextResponse.json({ error: error.message || "Payment could not be verified." }, { status: 502 });
