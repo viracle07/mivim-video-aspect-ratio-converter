@@ -39,6 +39,22 @@ export function AuthForm({ mode }) {
     }
   }
 
+  async function handleGoogleLogin() {
+    setBusy(true);
+    setMessage("");
+    try {
+      await googleLogin();
+    } catch (error) {
+      const setupErrors = ["auth/internal-error", "auth/operation-not-allowed", "auth/unauthorized-domain"];
+      setMessage(setupErrors.includes(error.code)
+        ? "Google sign-in is not enabled for this website. Check the Google provider and authorized domains in Firebase Authentication."
+        : error.code === "auth/popup-blocked" ? "Your browser blocked the Google sign-in window. Allow popups and try again."
+          : error.code === "auth/popup-closed-by-user" ? "Google sign-in was cancelled." : error.message || "Google sign-in could not be completed.");
+    } finally {
+      setBusy(false);
+    }
+  }
+
   return (
     <Card className="mx-auto w-full max-w-md">
       <CardHeader>
@@ -67,7 +83,7 @@ export function AuthForm({ mode }) {
           </Button>
         </form>
         {mode !== "reset" && (
-          <Button className="mt-3 w-full" variant="secondary" onClick={googleLogin} disabled={!hasFirebaseConfig} title={!hasFirebaseConfig ? "Connect Firebase to enable Google sign-in" : undefined}>
+          <Button className="mt-3 w-full" variant="secondary" onClick={handleGoogleLogin} disabled={!hasFirebaseConfig || busy} title={!hasFirebaseConfig ? "Connect Firebase to enable Google sign-in" : undefined}>
             <Chrome className="h-4 w-4" />
             Continue with Google
           </Button>

@@ -3,7 +3,7 @@ const securityHeaders = [
   { key: "X-Frame-Options", value: "DENY" },
   { key: "X-Content-Type-Options", value: "nosniff" },
   { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" },
-  { key: "Cross-Origin-Opener-Policy", value: "same-origin" },
+  { key: "Cross-Origin-Opener-Policy", value: "same-origin-allow-popups" },
   { key: "Cross-Origin-Resource-Policy", value: "same-origin" },
   {
     key: "Permissions-Policy",
@@ -13,13 +13,13 @@ const securityHeaders = [
     key: "Content-Security-Policy",
     value: [
       "default-src 'self'",
-      process.env.NODE_ENV === "production" ? "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval'" : "script-src 'self' 'unsafe-eval' 'unsafe-inline' 'wasm-unsafe-eval'",
+      process.env.NODE_ENV === "production" ? "script-src 'self' 'unsafe-inline' 'wasm-unsafe-eval' https://apis.google.com" : "script-src 'self' 'unsafe-eval' 'unsafe-inline' 'wasm-unsafe-eval' https://apis.google.com",
       "style-src 'self' 'unsafe-inline'",
       "img-src 'self' blob: data: https:",
       "media-src 'self' blob: https:",
       "worker-src 'self' blob:",
       "connect-src 'self' https://*.firebaseio.com https://*.googleapis.com https://api.cloudinary.com https://res.cloudinary.com",
-      "frame-src 'none'",
+      `frame-src 'self' https://${process.env.NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN || "invalid.firebaseapp.com"}`,
       "font-src 'self' data:"
     ].join("; ")
   }
