@@ -1,10 +1,14 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
 import { getPaystackPlan, paystackRequest } from "@/lib/paystack";
+import { activatePaidEntitlement } from "@/lib/firebase-admin-rest";
 
 const referenceSchema = z.string().regex(/^[A-Za-z0-9.=-]+$/).max(120);
 
 export async function GET(request) {
+  const uid = request.headers.get("X-MiVim-User");
+  const sessionEmail = request.headers.get("X-MiVim-Email")?.toLowerCase();
+  if (!uid) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
   const parsed = referenceSchema.safeParse(new URL(request.url).searchParams.get("reference"));
   if (!parsed.success) return NextResponse.json({ error: "Invalid payment reference." }, { status: 400 });
 
@@ -17,9 +21,12 @@ export async function GET(request) {
     const paystackPlan = plan.amount ? null : await paystackRequest(`/plan/${encodeURIComponent(plan.code)}`);
     const expectedAmount = plan.amount || Number(paystackPlan?.amount);
     const validAmount = Boolean(expectedAmount) && Number(transaction.amount) === expectedAmount;
-    if (transaction.status !== "success" || !validPlan || !validAmount) {
+    const validCustomer = Boolean(sessionEmail) && transaction.customer?.email?.toLowerCase() === sessionEmail;
+    if (transaction.status !== "success" || !validPlan || !validAmount || !validCustomer) {
       return NextResponse.json({ error: "Payment verification did not match the selected plan." }, { status: 400 });
     }
+
+    await activatePaidEntitlement(uid, planId, transaction.reference, transaction.paid_at);
 
     return NextResponse.json({
       verified: true,

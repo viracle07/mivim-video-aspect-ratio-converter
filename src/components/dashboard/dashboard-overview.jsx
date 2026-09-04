@@ -17,7 +17,7 @@ export function DashboardOverview() {
     { label: "Conversions", value: String(stats.total), delta: `${stats.completed} completed` },
     { label: "Storage used", value: formatStorage(stats.storageMb), delta: "Across uploaded videos" },
     { label: "Active jobs", value: String(stats.active), delta: stats.active ? "In the processing queue" : "Queue is clear" },
-    { label: "Trial days left", value: String(stats.trialDays), delta: "Upgrade anytime" }
+    { label: "Free uploads left", value: String(stats.freeUploadsRemaining), delta: "Three free uploads per account" }
   ];
 
   return (
@@ -40,7 +40,7 @@ export function DashboardOverview() {
           <CardHeader><h2 className="font-semibold">Workspace status</h2></CardHeader>
           <CardContent className="space-y-4">
             <div className="rounded-md bg-mist p-4"><Clock className="mb-3 h-5 w-5 text-mivim-600" /><p className="font-medium">Ready for new uploads</p><p className="mt-1 text-sm text-ink/60">Your queue has {stats.active} active {stats.active === 1 ? "job" : "jobs"}.</p></div>
-            <div className="border-t border-line pt-4"><div className="flex justify-between text-sm"><span className="text-ink/60">Current plan</span><span className="font-medium capitalize">{workspace.plan}</span></div><div className="mt-3 h-2 rounded bg-mist"><div className="h-2 rounded bg-mivim-600" style={{ width: `${Math.min(stats.total, 100)}%` }} /></div><p className="mt-2 text-xs text-ink/55">{stats.total} of 100 monthly conversions used</p></div>
+            <div className="border-t border-line pt-4"><div className="flex justify-between text-sm"><span className="text-ink/60">Current plan</span><span className="font-medium capitalize">{workspace.plan}</span></div><div className="mt-3 h-2 rounded bg-mist"><div className="h-2 rounded bg-mivim-600" style={{ width: `${workspace.plan === "trial" ? (stats.freeUploadsUsed / 3) * 100 : Math.min(stats.total, 100)}%` }} /></div><p className="mt-2 text-xs text-ink/55">{workspace.plan === "trial" ? `${stats.freeUploadsUsed} of 3 free uploads used` : `${stats.total} of 100 monthly conversions used`}</p></div>
             <Button asChild variant="secondary" className="w-full" href="/dashboard/billing">Manage plan</Button>
           </CardContent>
         </Card>

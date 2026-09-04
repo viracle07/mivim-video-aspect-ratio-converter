@@ -63,7 +63,7 @@ export function UploadDropzone() {
   async function startUpload() {
     if (!file || !metadata || state === "uploading") return;
     if (!hasWorkspaceAccess(workspace)) {
-      setMessage("Your trial has ended. Choose a plan from Billing to create new conversions.");
+      setMessage("Your 3 free uploads have been used. Choose a plan from Billing to continue.");
       return;
     }
     setState("uploading"); setMessage(""); setProgress(12);

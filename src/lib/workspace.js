@@ -1,9 +1,7 @@
 export const workspaceStorageKey = "mivim-workspace";
 const prototypeJobIds = new Set(["job_1042", "job_1041", "job_1038"]);
 
-function newTrialEnd() {
-  return new Date(Date.now() + 14 * 86400000).toISOString();
-}
+export const freeUploadLimit = 3;
 
 export function createWorkspace(user) {
   return {
@@ -14,8 +12,7 @@ export function createWorkspace(user) {
       timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || "UTC"
     },
     plan: user?.plan || "trial",
-    trialEndsAt: user?.trialEndsAt || newTrialEnd(),
-    billingVersion: 1,
+    billingVersion: 2,
     dataVersion: 1,
     contentUpdatedAt: null,
     billing: null,
@@ -33,10 +30,9 @@ export function migrateWorkspace(workspace) {
   } : job);
   return {
     ...workspace,
-    billingVersion: 1,
+    billingVersion: 2,
     dataVersion: 1,
     contentUpdatedAt: workspace.contentUpdatedAt || null,
-    trialEndsAt: workspace.billingVersion === 1 ? workspace.trialEndsAt : workspace.plan === "trial" ? newTrialEnd() : workspace.trialEndsAt,
     billing: workspace.billing || null,
     jobs
   };
@@ -45,7 +41,11 @@ export function migrateWorkspace(workspace) {
 export function hasWorkspaceAccess(workspace) {
   if (!workspace) return false;
   if (["monthly", "yearly"].includes(workspace.plan) && workspace.billing?.status === "active") return true;
-  return workspace.plan === "trial" && new Date(workspace.trialEndsAt).getTime() > Date.now();
+  return workspace.plan === "trial" && getFreeUploadsUsed(workspace) < freeUploadLimit;
+}
+
+export function getFreeUploadsUsed(workspace) {
+  return (workspace?.jobs || []).filter((job) => job.sourceStorage).length;
 }
 
 export function getWorkspaceStats(workspace) {
@@ -53,9 +53,9 @@ export function getWorkspaceStats(workspace) {
   const completed = jobs.filter((job) => job.status === "completed").length;
   const active = jobs.filter((job) => ["queued", "processing"].includes(job.status)).length;
   const storageMb = jobs.reduce((total, job) => total + Number.parseFloat(job.size || 0), 0);
-  const trialEnd = workspace?.trialEndsAt ? new Date(workspace.trialEndsAt) : null;
-  const trialDays = trialEnd ? Math.max(0, Math.ceil((trialEnd.getTime() - Date.now()) / 86400000)) : 14;
-  return { completed, active, total: jobs.length, storageMb, trialDays };
+  const freeUploadsUsed = getFreeUploadsUsed(workspace);
+  const freeUploadsRemaining = Math.max(0, freeUploadLimit - freeUploadsUsed);
+  return { completed, active, total: jobs.length, storageMb, freeUploadsUsed, freeUploadsRemaining };
 }
 
 export function formatStorage(megabytes) {

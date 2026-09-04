@@ -3,8 +3,7 @@ export const demoUser = {
   displayName: "Victor",
   email: "victor@example.com",
   emailVerified: true,
-  plan: "trial",
-  trialEndsAt: null
+  plan: "trial"
 };
 
 export const conversionJobs = [
@@ -44,7 +43,7 @@ export const analytics = [
   { label: "Conversions", value: "128", delta: "+18 this week" },
   { label: "Storage used", value: "7.4 GB", delta: "42% of quota" },
   { label: "Avg. processing", value: "2m 14s", delta: "HD exports" },
-  { label: "Trial days left", value: "14", delta: "Upgrade anytime" }
+  { label: "Free uploads left", value: "3", delta: "Upgrade anytime" }
 ];
 
 export const plans = [
