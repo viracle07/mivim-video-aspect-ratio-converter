@@ -8,6 +8,7 @@ import { hasFirebaseConfig } from "@/lib/env";
 
 const AuthContext = createContext(null);
 const storageKey = "mivim-user";
+const authSourceKey = "mivim-auth-source";
 
 function normalizeUser(firebaseUser, fallback = {}) {
   const email = firebaseUser?.email || fallback.email || demoUser.email;
@@ -38,6 +39,7 @@ async function persistUser(user) {
 
 function clearPersistedUser() {
   window.localStorage.removeItem(storageKey);
+  window.localStorage.removeItem(authSourceKey);
 }
 
 export function AuthProvider({ children }) {
@@ -67,6 +69,11 @@ export function AuthProvider({ children }) {
     let unsubscribe = () => {};
     try {
       unsubscribe = firebaseAuth.watch(async (firebaseUser) => {
+        if (window.localStorage.getItem(authSourceKey) === "server") {
+          await restorePromise;
+          setLoading(false);
+          return;
+        }
         if (firebaseUser) {
           const nextUser = normalizeUser(firebaseUser);
           try { setUser(await persistUser(nextUser)); } catch { setUser(null); }
@@ -101,6 +108,7 @@ export function AuthProvider({ children }) {
         if (!response.ok) throw new Error(signedIn.error || "Login failed.");
         const sessionUser = normalizeUser(signedIn, signedIn);
         window.localStorage.setItem(storageKey, JSON.stringify(sessionUser));
+        window.localStorage.setItem(authSourceKey, "server");
         setUser(sessionUser);
         router.push(nextPath);
       },
@@ -108,6 +116,7 @@ export function AuthProvider({ children }) {
         const signedUp = await firebaseAuth.signUp(email, password);
         const nextUser = normalizeUser(signedUp, { email, displayName: email.split("@")[0], emailVerified: signedUp.emailVerified ?? false });
         const sessionUser = await persistUser(nextUser);
+        window.localStorage.setItem(authSourceKey, "firebase");
         setUser(sessionUser);
         router.push("/verify-email");
       },
@@ -115,6 +124,7 @@ export function AuthProvider({ children }) {
         const signedIn = await firebaseAuth.signInWithGoogle();
         const nextUser = normalizeUser(signedIn, { provider: "google", emailVerified: true });
         const sessionUser = await persistUser(nextUser);
+        window.localStorage.setItem(authSourceKey, "firebase");
         setUser(sessionUser);
         router.push("/dashboard");
       },
