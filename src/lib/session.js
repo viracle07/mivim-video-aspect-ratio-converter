@@ -1,5 +1,6 @@
 const encoder = new TextEncoder();
 const sessionLifetime = 14 * 24 * 60 * 60;
+const sessionVersion = 2;
 
 function getSecret() {
   if (process.env.SESSION_SECRET) return process.env.SESSION_SECRET;
@@ -26,7 +27,7 @@ async function hmac(value) {
 }
 
 export async function createSessionToken(identity) {
-  const payload = toBase64Url(encoder.encode(JSON.stringify({ ...identity, exp: Math.floor(Date.now() / 1000) + sessionLifetime })));
+  const payload = toBase64Url(encoder.encode(JSON.stringify({ ...identity, version: sessionVersion, exp: Math.floor(Date.now() / 1000) + sessionLifetime })));
   const signature = await hmac(payload);
   if (!signature) throw new Error("SESSION_SECRET is required in production.");
   return `${payload}.${toBase64Url(signature)}`;
@@ -43,6 +44,7 @@ export async function verifySessionToken(token) {
     for (let index = 0; index < expected.length; index += 1) difference |= expected[index] ^ received[index];
     if (difference !== 0) return null;
     const session = JSON.parse(new TextDecoder().decode(fromBase64Url(payload)));
+    if (session.version !== sessionVersion) return null;
     if (!session.exp || session.exp <= Math.floor(Date.now() / 1000)) return null;
     return session;
   } catch {
