@@ -23,21 +23,32 @@ export function WorkspaceProvider({ children }) {
 
     (async () => {
       try {
-        const cloud = await loadCloudWorkspace(user.uid);
+        const [cloud, entitlementResponse] = await Promise.all([
+          loadCloudWorkspace(user.uid),
+          fetch("/api/account/entitlement", { cache: "no-store" })
+        ]);
+        const entitlement = entitlementResponse.ok ? await entitlementResponse.json() : null;
         if (!active) return;
         if (!cloud) {
           const saved = await saveCloudWorkspace(user.uid, localWorkspace);
+          if (entitlement) {
+            const nextWorkspace = { ...localWorkspace, plan: entitlement.plan, entitlement, billing: entitlement.paid ? { ...(localWorkspace.billing || {}), status: entitlement.status, expiresAt: entitlement.expiresAt } : localWorkspace.billing };
+            window.localStorage.setItem(key, JSON.stringify(nextWorkspace));
+            setWorkspace(nextWorkspace);
+          }
           if (active) setCloudStatus(saved ? "synced" : "local");
           return;
         }
         const cloudIsNewer = (cloud.contentUpdatedAt || "") > (localWorkspace.contentUpdatedAt || "");
-        const nextWorkspace = cloudIsNewer
+        let nextWorkspace = cloudIsNewer
           ? migrateWorkspace({ ...localWorkspace, profile: cloud.profile || localWorkspace.profile, jobs: cloud.jobs || [], dataVersion: cloud.dataVersion || 1, contentUpdatedAt: cloud.contentUpdatedAt })
           : localWorkspace;
-        if (cloudIsNewer) {
+        if (entitlement) nextWorkspace = { ...nextWorkspace, plan: entitlement.plan, entitlement, billing: entitlement.paid ? { ...(nextWorkspace.billing || {}), status: entitlement.status, expiresAt: entitlement.expiresAt } : nextWorkspace.billing };
+        if (cloudIsNewer || entitlement) {
           window.localStorage.setItem(key, JSON.stringify(nextWorkspace));
           setWorkspace(nextWorkspace);
-        } else if ((localWorkspace.contentUpdatedAt || "") > (cloud.contentUpdatedAt || "")) {
+        }
+        if (!cloudIsNewer && (localWorkspace.contentUpdatedAt || "") > (cloud.contentUpdatedAt || "")) {
           await saveCloudWorkspace(user.uid, localWorkspace);
         }
         if (active) setCloudStatus("synced");
@@ -74,7 +85,7 @@ export function WorkspaceProvider({ children }) {
       changeWorkspace((current) => ({ ...current, jobs: (current.jobs || []).filter((job) => job.id !== jobId) }));
     },
     activatePlan(plan, billing) {
-      changeWorkspace((current) => ({ ...current, plan, billing: { ...billing, status: "active" } }));
+      changeWorkspace((current) => ({ ...current, plan, entitlement: { ...(current.entitlement || {}), plan, paid: true, status: "active", freeUploadsUsed: current.entitlement?.freeUploadsUsed || 0 }, billing: { ...billing, status: "active" } }));
     },
     updateProfile(profile) {
       changeWorkspace((current) => ({ ...current, profile: { ...current.profile, ...profile } }));

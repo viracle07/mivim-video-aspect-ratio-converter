@@ -29,9 +29,9 @@ MiVim is a production-shaped Next.js SaaS application for uploading videos, fitt
 
 1. Create a Firebase project and add a Web app from Project settings.
 2. Enable Email/Password and Google providers under Authentication.
-3. Create a Firestore database and a Firebase Storage bucket.
+3. Create a Firestore database. Video backups use Cloudinary, so Firebase Storage is not required.
 4. Add the six Web app configuration values to `.env.local`.
-5. Run `npm run firebase:login`, then `npm run firebase:deploy:rules`.
+5. Run `npm run firebase:login`, then deploy the Firestore rules.
 6. Restart MiVim after changing `.env.local`.
 
 Without these values, MiVim clearly runs in local preview mode. Real Firebase accounts, Google sign-in, and cross-device Firestore synchronization activate only after setup is complete.

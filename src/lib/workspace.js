@@ -16,6 +16,7 @@ export function createWorkspace(user) {
     dataVersion: 1,
     contentUpdatedAt: null,
     billing: null,
+    entitlement: null,
     jobs: []
   };
 }
@@ -34,6 +35,7 @@ export function migrateWorkspace(workspace) {
     dataVersion: 1,
     contentUpdatedAt: workspace.contentUpdatedAt || null,
     billing: workspace.billing || null,
+    entitlement: workspace.entitlement || null,
     jobs
   };
 }
@@ -53,7 +55,7 @@ export function getWorkspaceStats(workspace) {
   const completed = jobs.filter((job) => job.status === "completed").length;
   const active = jobs.filter((job) => ["queued", "processing"].includes(job.status)).length;
   const storageMb = jobs.reduce((total, job) => total + Number.parseFloat(job.size || 0), 0);
-  const freeUploadsUsed = getFreeUploadsUsed(workspace);
+  const freeUploadsUsed = Number.isFinite(workspace?.entitlement?.freeUploadsUsed) ? workspace.entitlement.freeUploadsUsed : getFreeUploadsUsed(workspace);
   const freeUploadsRemaining = Math.max(0, freeUploadLimit - freeUploadsUsed);
   return { completed, active, total: jobs.length, storageMb, freeUploadsUsed, freeUploadsRemaining };
 }
