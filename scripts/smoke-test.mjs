@@ -15,7 +15,10 @@ if (!ffmpegWasm.headers.get("content-type")?.includes("application/wasm")) throw
 await check("Paystack status", "/api/paystack/status", 200);
 await check("Firebase status", "/api/firebase/status", 200);
 await check("Cloudinary status", "/api/cloudinary/status", 200);
+await check("privacy policy", "/privacy", 200);
+await check("terms of service", "/terms", 200);
 await check("protected dashboard", "/dashboard", 307);
+await check("protected account export", "/api/account/export", 401);
 await check("protected conversion API", "/api/convert", 401, { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
 await check("unsigned Paystack webhook", "/api/paystack/webhook", 401, { method: "POST", headers: { "Content-Type": "application/json" }, body: "{}" });
 await check("cross-origin session", "/api/auth/session", 403, { method: "POST", headers: { "Content-Type": "application/json", Origin: "https://example.invalid" }, body: JSON.stringify({ email: "smoke@example.com", uid: "smoke-user" }) });

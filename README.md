@@ -17,6 +17,7 @@ MiVim is a production-shaped Next.js SaaS application for uploading videos, fitt
 - Server-verified paid conversion access tied to the signed-in Paystack customer
 - Paystack renewal, failed-invoice, non-renewing, and cancellation lifecycle sync
 - Platform admin dashboard for users, subscriptions, usage, access controls, and audit logs
+- In-app and optional browser notifications, daily expiry checks, account export, and account deletion
 
 ## Getting Started
 
@@ -49,5 +50,7 @@ Set `SESSION_SECRET` to a long random value before production deployment. Produc
 Deploy the Next.js app to Vercel and configure `SESSION_SECRET`, the Firebase browser and Admin variables, `PAYSTACK_SECRET_KEY`, both Paystack plan codes, and `ADMIN_EMAILS`. Keep `FIREBASE_ADMIN_PRIVATE_KEY` quoted with escaped newlines. Register `https://your-domain.com/api/paystack/webhook` as the webhook URL in Paystack.
 
 Video conversion and media storage currently run in each user's browser. Profile details and conversion metadata sync through Firestore when Firebase is configured, while video files stay on-device.
+
+Set `CRON_SECRET` for the daily Vercel subscription check and `NEXT_PUBLIC_SUPPORT_EMAIL` to a monitored address. Connect an uptime monitor to `/api/health`. Large server-rendered video jobs require a separate long-running FFmpeg worker and object-storage queue; they should not run inside a Vercel request.
 
 When Cloudinary is configured, completed outputs are also uploaded through a signed server-authorized request. MiVim keeps a local copy when cloud upload is unavailable or exceeds the account's file-size limit.

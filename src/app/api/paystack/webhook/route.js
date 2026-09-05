@@ -40,7 +40,8 @@ export async function POST(request) {
     if (email) await indexBillingCustomer(email, uid);
     const details = {
       customerCode: data.customer?.customer_code || "",
-      subscriptionCode: subscriptionCode(data)
+      subscriptionCode: subscriptionCode(data),
+      emailToken: data.email_token || data.subscription?.email_token || ""
     };
 
     if (event.event === "charge.success" || (event.event === "invoice.update" && data.paid === true)) {

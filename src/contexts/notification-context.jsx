@@ -1,17 +1,23 @@
 "use client";
 
-import { createContext, useCallback, useContext, useEffect, useState } from "react";
+import { createContext, useCallback, useContext, useEffect, useRef, useState } from "react";
 
 const NotificationContext = createContext(null);
 
 export function NotificationProvider({ children }) {
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
+  const knownIds = useRef(null);
   const refresh = useCallback(async () => {
     const response = await fetch("/api/notifications", { cache: "no-store" });
     if (!response.ok) throw new Error("Notifications could not be loaded.");
     const result = await response.json();
-    setNotifications(result.notifications || []);
+    const next = result.notifications || [];
+    if (knownIds.current && typeof Notification !== "undefined" && Notification.permission === "granted") {
+      next.filter((item) => !item.read && !knownIds.current.has(`${item.scope}:${item.id}`)).slice(0, 3).forEach((item) => new Notification(item.title, { body: item.message }));
+    }
+    knownIds.current = new Set(next.map((item) => `${item.scope}:${item.id}`));
+    setNotifications(next);
     setLoading(false);
   }, []);
   useEffect(() => { refresh().catch(() => setLoading(false)); const timer = setInterval(() => refresh().catch(() => {}), 60000); return () => clearInterval(timer); }, [refresh]);

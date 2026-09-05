@@ -106,6 +106,7 @@ function decodeDocument(document) {
     paymentReference: fields.paymentReference?.stringValue || "",
     customerCode: fields.customerCode?.stringValue || "",
     subscriptionCode: fields.subscriptionCode?.stringValue || "",
+    emailToken: fields.emailToken?.stringValue || "",
     expiresAt: fields.expiresAt?.timestampValue || null,
     updatedAt: fields.updatedAt?.timestampValue || null,
     updateTime: document?.updateTime || null
@@ -144,6 +145,7 @@ async function writeEntitlement(uid, entitlement, updateTime) {
     paymentReference: { stringValue: entitlement.paymentReference || "" },
     customerCode: { stringValue: entitlement.customerCode || "" },
     subscriptionCode: { stringValue: entitlement.subscriptionCode || "" },
+    emailToken: { stringValue: entitlement.emailToken || "" },
     expiresAt: entitlement.expiresAt ? { timestampValue: entitlement.expiresAt } : { nullValue: null },
     updatedAt: { timestampValue: new Date().toISOString() }
   };
@@ -320,4 +322,15 @@ export async function listAdminLogs() {
 export async function deleteEntitlement(uid) {
   const response = await requestDocument(uid, { method: "DELETE" });
   if (!response.ok && response.status !== 404) throw new Error("Entitlement could not be deleted.");
+}
+
+export async function deleteAccountData(uid) {
+  const token = await getAccessToken();
+  const notifications = await listNotifications(uid);
+  await Promise.all(notifications.map((item) => fetch(notificationUrl(uid, item.id), { method: "DELETE", headers: { Authorization: `Bearer ${token}` } })));
+  await fetch(documentUrl(uid), { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
+  await fetch(workspaceDocumentUrl(uid), { method: "DELETE", headers: { Authorization: `Bearer ${token}` } });
+  const { projectId } = getAdminConfig();
+  const response = await fetch(`https://identitytoolkit.googleapis.com/v1/projects/${encodeURIComponent(projectId)}/accounts:delete`, { method: "POST", headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" }, body: JSON.stringify({ localId: uid }) });
+  if (!response.ok) throw new Error("Authentication account could not be deleted.");
 }

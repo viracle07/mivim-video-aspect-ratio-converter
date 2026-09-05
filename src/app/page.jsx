@@ -87,7 +87,7 @@ export default function HomePage() {
       </section>
 
       <footer className="border-t border-line bg-ink py-7 text-white">
-        <div className="mx-auto flex max-w-7xl flex-col gap-2 px-5 text-sm text-white/60 sm:flex-row sm:items-center sm:justify-between sm:px-8"><p>MiVim</p><p>Video formats for modern creators.</p></div>
+        <div className="mx-auto flex max-w-7xl flex-col gap-3 px-5 text-sm text-white/60 sm:flex-row sm:items-center sm:justify-between sm:px-8"><p>MiVim</p><div className="flex gap-4"><Link href="/privacy" className="hover:text-white">Privacy</Link><Link href="/terms" className="hover:text-white">Terms</Link><a href={`mailto:${process.env.NEXT_PUBLIC_SUPPORT_EMAIL || "support@example.com"}`} className="hover:text-white">Support</a></div></div>
       </footer>
     </main>
   );
