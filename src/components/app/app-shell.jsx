@@ -26,8 +26,8 @@ export function AppShell({ children }) {
   const visibleNav = nav.filter((item) => item.label !== "Admin" || user?.role === "admin");
 
   return (
-    <div className="min-h-screen bg-mist">
-      <aside className="fixed inset-y-0 left-0 hidden w-72 border-r border-line bg-white px-4 py-5 lg:block">
+    <div className="theme-adaptive min-h-screen bg-mist">
+      <aside className="fixed inset-y-0 left-0 hidden w-72 border-r border-line bg-surface px-4 py-5 lg:block">
         <Link href="/dashboard" className="flex items-center gap-3 px-2">
           <span className="grid h-10 w-10 place-items-center rounded-md bg-mivim-600 font-semibold text-white">M</span>
           <span>
@@ -56,7 +56,7 @@ export function AppShell({ children }) {
         </nav>
       </aside>
       <div className="lg:pl-72">
-        <header className="sticky top-0 z-20 border-b border-line bg-white/92 backdrop-blur">
+        <header className="sticky top-0 z-20 border-b border-line bg-surface/92 backdrop-blur">
           <div className="flex h-16 items-center justify-between px-5 lg:px-8">
             <div className="flex items-center gap-3">
               <BarChart3 className="h-5 w-5 text-mivim-600" />
@@ -78,7 +78,7 @@ export function AppShell({ children }) {
           <VerificationBanner />
           {children}
         </main>
-        <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-line bg-white px-2 pb-[env(safe-area-inset-bottom)] lg:hidden">
+        <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-line bg-surface px-2 pb-[env(safe-area-inset-bottom)] lg:hidden">
           {visibleNav.filter((item) => item.label !== "Admin").map((item) => {
             const Icon = item.icon;
             const active = item.href === "/dashboard" ? pathname === item.href : pathname.startsWith(item.href);

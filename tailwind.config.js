@@ -6,6 +6,8 @@ const config = {
         ink: "rgb(var(--ink) / <alpha-value>)",
         mist: "rgb(var(--mist) / <alpha-value>)",
         line: "rgb(var(--line) / <alpha-value>)",
+        surface: "rgb(var(--surface) / <alpha-value>)",
+        night: "#101418",
         mivim: {
           500: "#14b8a6",
           600: "#0f9488",

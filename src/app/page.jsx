@@ -11,21 +11,21 @@ const formats = [
 
 export default function HomePage() {
   return (
-    <main className="min-h-screen bg-white text-ink">
-      <header className="absolute inset-x-0 top-0 z-20 border-b border-white/20 bg-ink/75 text-white backdrop-blur-sm">
+    <main className="min-h-screen bg-surface text-ink">
+      <header className="absolute inset-x-0 top-0 z-20 border-b border-white/20 bg-night/75 text-white backdrop-blur-sm">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-5 sm:px-8">
           <Link href="/" className="flex items-center gap-2 font-semibold" aria-label="MiVim home">
-            <span className="grid h-9 w-9 place-items-center rounded-md bg-mivim-500 text-ink"><Film className="h-5 w-5" /></span>
+            <span className="grid h-9 w-9 place-items-center rounded-md bg-mivim-500 text-night"><Film className="h-5 w-5" /></span>
             <span className="text-lg">MiVim</span>
           </Link>
           <nav className="flex items-center gap-2" aria-label="Account">
             <Link className="rounded-md px-3 py-2 text-sm font-medium hover:bg-white/10" href="/login">Log in</Link>
-            <Link className="rounded-md bg-white px-4 py-2 text-sm font-semibold text-ink hover:bg-mist" href="/signup">Start free</Link>
+            <Link className="rounded-md bg-white px-4 py-2 text-sm font-semibold text-night hover:bg-mist" href="/signup">Start free</Link>
           </nav>
         </div>
       </header>
 
-      <section className="relative flex min-h-[82vh] items-end overflow-hidden bg-ink">
+      <section className="relative flex min-h-[82vh] items-end overflow-hidden bg-night">
         <Image
           src="/images/mivim-format-workspace.png"
           alt="A creator preparing one video in four social media aspect ratios"
@@ -34,15 +34,15 @@ export default function HomePage() {
           sizes="100vw"
           className="object-cover object-center"
         />
-        <div className="absolute inset-0 bg-ink/35" />
-        <div className="relative z-10 w-full border-t border-white/20 bg-ink/90">
+        <div className="absolute inset-0 bg-night/35" />
+        <div className="relative z-10 w-full border-t border-white/20 bg-night/90">
           <div className="mx-auto max-w-7xl px-5 py-8 text-white sm:px-8 sm:py-10">
             <div className="max-w-3xl">
               <p className="text-sm font-semibold uppercase text-mivim-500">One video. Every format.</p>
               <h1 className="mt-3 text-4xl font-semibold leading-tight sm:text-5xl lg:text-6xl">MiVim video aspect ratio converter</h1>
               <p className="mt-4 max-w-2xl text-base leading-7 text-white/75 sm:text-lg">Turn videos into polished vertical, square, landscape, and portrait exports directly in your browser.</p>
               <div className="mt-6 flex flex-wrap gap-3">
-                <Link className="inline-flex h-12 items-center gap-2 rounded-md bg-mivim-500 px-5 font-semibold text-ink hover:bg-white" href="/signup">Start converting <ArrowRight className="h-5 w-5" /></Link>
+                <Link className="inline-flex h-12 items-center gap-2 rounded-md bg-mivim-500 px-5 font-semibold text-night hover:bg-white" href="/signup">Start converting <ArrowRight className="h-5 w-5" /></Link>
                 <Link className="inline-flex h-12 items-center rounded-md border border-white/35 px-5 font-semibold hover:bg-white/10" href="/login">Log in</Link>
               </div>
             </div>
@@ -59,7 +59,7 @@ export default function HomePage() {
             </div>
             <div className="grid grid-cols-2 gap-px overflow-hidden rounded-md border border-line bg-line md:grid-cols-4">
               {formats.map((format) => (
-                <div key={format.ratio} className="bg-white px-4 py-5">
+                <div key={format.ratio} className="bg-surface px-4 py-5">
                   <p className="text-2xl font-semibold">{format.ratio}</p>
                   <p className="mt-1 text-sm text-ink/55">{format.label}</p>
                 </div>
@@ -86,7 +86,7 @@ export default function HomePage() {
         </div>
       </section>
 
-      <footer className="border-t border-line bg-ink py-7 text-white">
+      <footer className="border-t border-line bg-night py-7 text-white">
         <div className="mx-auto flex max-w-7xl flex-col gap-3 px-5 text-sm text-white/60 sm:flex-row sm:items-center sm:justify-between sm:px-8"><p>MiVim</p><div className="flex gap-4"><Link href="/privacy" className="hover:text-white">Privacy</Link><Link href="/terms" className="hover:text-white">Terms</Link><a href={`mailto:${process.env.NEXT_PUBLIC_SUPPORT_EMAIL || "support@example.com"}`} className="hover:text-white">Support</a></div></div>
       </footer>
     </main>

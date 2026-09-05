@@ -32,10 +32,11 @@ body {
   font-family: Arial, Helvetica, sans-serif;
 }
 
-.bg-white { background-color: rgb(var(--surface)); }
-.bg-white\/92 { background-color: rgb(var(--surface) / 0.92); }
 html[data-theme="dark"] .shadow-sm,
 html[data-theme="dark"] .shadow-soft { box-shadow: 0 12px 36px rgb(0 0 0 / 0.28); }
+
+.theme-adaptive .bg-white { background-color: rgb(var(--surface)); }
+.theme-adaptive .bg-white\/92 { background-color: rgb(var(--surface) / 0.92); }
 
 button,
 input,

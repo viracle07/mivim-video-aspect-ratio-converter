@@ -4,8 +4,8 @@ import { cn } from "@/lib/utils";
 
 const variants = {
   primary: "bg-mivim-600 text-white hover:bg-mivim-500",
-  secondary: "border border-line bg-white text-ink hover:bg-mist",
-  ghost: "text-ink hover:bg-white",
+  secondary: "border border-line bg-surface text-ink hover:bg-mist",
+  ghost: "text-ink hover:bg-surface",
   danger: "bg-coral text-white hover:brightness-95"
 };
 
