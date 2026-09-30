@@ -49,8 +49,7 @@ export function AuthForm({ mode }) {
       const setupErrors = ["auth/internal-error", "auth/operation-not-allowed", "auth/unauthorized-domain"];
       setMessage(setupErrors.includes(error.code)
         ? "Google sign-in is not enabled for this website. Check the Google provider and authorized domains in Firebase Authentication."
-        : error.code === "auth/popup-blocked" ? "Your browser blocked the Google sign-in window. Allow popups and try again."
-          : error.code === "auth/popup-closed-by-user" ? "Google sign-in was cancelled." : error.message || "Google sign-in could not be completed.");
+        : error.message || "Google sign-in could not be completed.");
     } finally {
       setBusy(false);
     }

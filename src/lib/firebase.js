@@ -10,7 +10,7 @@ import {
   sendEmailVerification,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
-  signInWithPopup,
+  signInWithRedirect,
   signOut
 } from "@firebase/auth";
 import { getFirestore } from "@firebase/firestore";
@@ -53,8 +53,10 @@ export const firebaseAuth = {
   async signInWithGoogle() {
     const auth = getFirebaseAuth();
     if (!auth) return { email: "google-user@example.com", displayName: "Google User", emailVerified: true };
-    const credential = await signInWithPopup(auth, new GoogleAuthProvider());
-    return credential.user;
+    const provider = new GoogleAuthProvider();
+    provider.setCustomParameters({ prompt: "select_account" });
+    await signInWithRedirect(auth, provider);
+    return null;
   },
   async resetPassword(email) {
     const auth = getFirebaseAuth();

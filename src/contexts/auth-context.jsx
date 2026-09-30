@@ -9,6 +9,7 @@ import { hasFirebaseConfig } from "@/lib/env";
 const AuthContext = createContext(null);
 const storageKey = "mivim-user";
 const authSourceKey = "mivim-auth-source";
+const googleRedirectKey = "mivim-google-redirect";
 let pendingSession = null;
 
 function normalizeUser(firebaseUser, fallback = {}) {
@@ -84,7 +85,13 @@ export function AuthProvider({ children }) {
         }
         if (firebaseUser) {
           const nextUser = normalizeUser(firebaseUser);
-          try { setUser(await persistUser(nextUser)); } catch { setUser(null); }
+          try {
+            setUser(await persistUser(nextUser));
+            if (window.sessionStorage.getItem(googleRedirectKey)) {
+              window.sessionStorage.removeItem(googleRedirectKey);
+              router.replace("/dashboard");
+            }
+          } catch { setUser(null); }
         } else {
           const restored = await restorePromise;
           if (hasFirebaseConfig && !restored) {
@@ -129,12 +136,20 @@ export function AuthProvider({ children }) {
         router.push("/verify-email");
       },
       async googleLogin() {
-        const signedIn = await firebaseAuth.signInWithGoogle();
-        const nextUser = normalizeUser(signedIn, { provider: "google", emailVerified: true });
-        const sessionUser = await persistUser(nextUser);
-        window.localStorage.setItem(authSourceKey, "firebase");
-        setUser(sessionUser);
-        router.push("/dashboard");
+        window.sessionStorage.setItem(googleRedirectKey, "1");
+        try {
+          const signedIn = await firebaseAuth.signInWithGoogle();
+          if (!signedIn) return;
+          const nextUser = normalizeUser(signedIn, { provider: "google", emailVerified: true });
+          const sessionUser = await persistUser(nextUser);
+          window.localStorage.setItem(authSourceKey, "firebase");
+          window.sessionStorage.removeItem(googleRedirectKey);
+          setUser(sessionUser);
+          router.push("/dashboard");
+        } catch (error) {
+          window.sessionStorage.removeItem(googleRedirectKey);
+          throw error;
+        }
       },
       async resetPassword(email) {
         return firebaseAuth.resetPassword(email);
