@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 128 128" role="img" aria-label="Mivim">
+  <rect width="128" height="128" rx="22" fill="#0d9488"/>
+  <rect x="10" y="42" width="108" height="44" rx="8" fill="#0f1417"/>
+  <text x="64" y="72" fill="#ffffff" font-family="Arial, Helvetica, sans-serif" font-size="27" font-weight="700" text-anchor="middle">mivim</text>
+</svg>

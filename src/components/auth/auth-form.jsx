@@ -60,7 +60,7 @@ export function AuthForm({ mode }) {
       <CardHeader>
         <h1 className="text-2xl font-semibold">{isSignup ? "Create your account" : mode === "reset" ? "Reset password" : isAdmin ? "Administrator sign in" : "Welcome back"}</h1>
         <p className="mt-1 text-sm text-ink/60">
-          {isSignup ? "Start your MiVim free trial and verify your email." : mode === "reset" ? "We will send reset instructions." : isAdmin ? "Access MiVim platform operations." : "Log in to continue converting videos."}
+          {isSignup ? "Start using Mivim Video Resizer and verify your email." : mode === "reset" ? "We will send reset instructions." : isAdmin ? "Access Mivim platform operations." : "Log in to continue converting videos."}
         </p>
       </CardHeader>
       <CardContent>

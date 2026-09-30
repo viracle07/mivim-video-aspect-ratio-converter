@@ -32,7 +32,7 @@ export function AppShell({ children }) {
         <Link href="/dashboard" className="flex items-center gap-3 px-2">
           <span className="grid h-10 w-10 place-items-center rounded-md bg-mivim-600 font-semibold text-white">M</span>
           <span>
-            <span className="block font-semibold">MiVim</span>
+            <span className="block font-semibold">Mivim Video Resizer</span>
             <span className="text-xs text-ink/55">Video converter</span>
           </span>
         </Link>

@@ -54,7 +54,7 @@ export function UploadDropzone() {
   function videoReady(event) {
     const video = event.currentTarget;
     if (!video.duration || !video.videoWidth || !video.videoHeight) {
-      setMessage("MiVim could not read this video. Try a different file."); setState("idle"); return;
+      setMessage("Mivim could not read this video. Try a different file."); setState("idle"); return;
     }
     setMetadata({ duration: video.duration, width: video.videoWidth, height: video.videoHeight });
     setState("ready");

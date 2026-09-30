@@ -38,7 +38,7 @@ export function BillingPanel() {
         const result = await response.json();
         if (!response.ok) throw new Error(result.error || "Payment verification failed.");
         activatePlan(result.plan, { reference: result.reference, amount: result.amount, currency: result.currency, paidAt: result.paidAt, customerCode: result.customerCode });
-        setMessage("Payment verified. Your MiVim subscription is active.");
+        setMessage("Payment verified. Your Mivim subscription is active.");
         router.replace("/dashboard/billing");
       })
       .catch((error) => setMessage(error.message))
@@ -86,7 +86,7 @@ export function BillingPanel() {
   }
 
   if (!workspace) return <div className="h-64 animate-pulse rounded-lg bg-white" />;
-  if (!paymentsEnabled) return <Card><CardContent className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"><div className="flex items-start gap-3"><div className="grid h-10 w-10 shrink-0 place-items-center rounded-md bg-mivim-600/10 text-mivim-600"><CheckCircle2 className="h-5 w-5" /></div><div><p className="font-semibold">MiVim is free to use</p><p className="mt-1 text-sm text-ink/55">Payments are temporarily paused. You can upload and convert videos without a subscription.</p></div></div><span className="w-fit rounded-full bg-mivim-600 px-3 py-1 text-xs font-medium text-white">Free access</span></CardContent></Card>;
+  if (!paymentsEnabled) return <Card><CardContent className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"><div className="flex items-start gap-3"><div className="grid h-10 w-10 shrink-0 place-items-center rounded-md bg-mivim-600/10 text-mivim-600"><CheckCircle2 className="h-5 w-5" /></div><div><p className="font-semibold">Mivim is free to use</p><p className="mt-1 text-sm text-ink/55">Payments are temporarily paused. You can upload and convert videos without a subscription.</p></div></div><span className="w-fit rounded-full bg-mivim-600 px-3 py-1 text-xs font-medium text-white">Free access</span></CardContent></Card>;
   const active = Boolean(workspace.entitlement?.paid) || (["monthly", "yearly"].includes(workspace.plan) && ["active", "non-renewing", "attention"].includes(workspace.billing?.status));
   return <div className="space-y-6">
     <Card><CardContent className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between"><div className="flex items-start gap-3"><div className="grid h-10 w-10 shrink-0 place-items-center rounded-md bg-mist text-mivim-600">{active ? <CheckCircle2 className="h-5 w-5" /> : <CreditCard className="h-5 w-5" />}</div><div><p className="font-semibold">{active ? `${workspace.plan === "yearly" ? "Studio Yearly" : "Creator Monthly"} is active` : "Free uploads"}</p><p className="mt-1 text-sm text-ink/55">{active ? `${workspace.entitlement?.expiresAt ? `Access until ${new Date(workspace.entitlement.expiresAt).toLocaleDateString()}` : `Paid with Paystack · ${workspace.billing?.currency || "NGN"}`}` : `${stats?.freeUploadsRemaining ?? 0} of 3 free uploads remaining`}</p></div></div>{active && <span className="w-fit rounded-full bg-mivim-600 px-3 py-1 text-xs font-medium capitalize text-white">{workspace.entitlement?.status || "active"}</span>}</CardContent></Card>

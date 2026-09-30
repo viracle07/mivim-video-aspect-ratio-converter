@@ -1,6 +1,6 @@
-# MiVim Video Aspect Ratio Converter
+# Mivim Video Resizer
 
-MiVim is a production-shaped Next.js SaaS application for uploading videos, fitting them into target aspect ratios without cropping, tracking conversion history, and managing subscriptions.
+Mivim Video Resizer is a production-shaped Next.js application for uploading videos, fitting them into target aspect ratios, converting frame rates, tracking conversion history, and managing access.
 
 ## Stack
 

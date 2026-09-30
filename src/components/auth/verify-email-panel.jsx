@@ -43,7 +43,7 @@ export function VerifyEmailPanel() {
       <Card className="mx-auto w-full max-w-md">
         <CardHeader>
           <h1 className="text-2xl font-semibold">Sign in required</h1>
-          <p className="mt-1 text-sm text-ink/60">Log in to verify your MiVim account.</p>
+          <p className="mt-1 text-sm text-ink/60">Log in to verify your Mivim account.</p>
         </CardHeader>
         <CardContent>
           <Button asChild href="/login" className="w-full">Log in</Button>
@@ -58,7 +58,7 @@ export function VerifyEmailPanel() {
         <CardHeader>
           <CheckCircle2 className="mb-3 h-8 w-8 text-mivim-600" />
           <h1 className="text-2xl font-semibold">Email verified</h1>
-          <p className="mt-1 text-sm text-ink/60">Your account is ready for protected MiVim workflows.</p>
+          <p className="mt-1 text-sm text-ink/60">Your account is ready for protected Mivim workflows.</p>
         </CardHeader>
         <CardContent>
           <Button asChild href="/dashboard" className="w-full">Continue to dashboard</Button>

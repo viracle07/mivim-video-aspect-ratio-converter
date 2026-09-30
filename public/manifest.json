@@ -1,7 +1,7 @@
 {
-  "name": "MiVim Video Aspect Ratio Converter",
-  "short_name": "MiVim",
-  "description": "Convert videos into polished social media aspect ratios from an installable workspace.",
+  "name": "Mivim Video Resizer",
+  "short_name": "Mivim",
+  "description": "Resize videos for any aspect ratio and convert frame rates in an installable video workspace.",
   "start_url": "/dashboard",
   "scope": "/",
   "display": "standalone",

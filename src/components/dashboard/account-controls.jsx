@@ -8,10 +8,10 @@ export function AccountControls() {
   async function enableBrowserNotifications() {
     if (!("Notification" in window)) return window.alert("This browser does not support desktop notifications.");
     const permission = await Notification.requestPermission();
-    if (permission === "granted") new Notification("MiVim notifications enabled", { body: "Important account alerts can now appear on this device." });
+    if (permission === "granted") new Notification("Mivim notifications enabled", { body: "Important account alerts can now appear on this device." });
   }
   async function deleteAccount() {
-    const confirmation = window.prompt("This permanently deletes your account and MiVim records. Type DELETE to continue.");
+    const confirmation = window.prompt("This permanently deletes your account and Mivim records. Type DELETE to continue.");
     if (confirmation !== "DELETE") return;
     const response = await fetch("/api/account", { method: "DELETE", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ confirmation }) });
     const result = await response.json();

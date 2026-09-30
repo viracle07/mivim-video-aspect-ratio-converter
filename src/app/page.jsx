@@ -3,6 +3,10 @@ import Link from "next/link";
 import { ArrowRight, Check, Film, LockKeyhole, MonitorPlay, Scissors } from "lucide-react";
 import { InstallButton } from "@/components/pwa/install-button";
 
+export const metadata = {
+  alternates: { canonical: "/" }
+};
+
 const formats = [
   { ratio: "9:16", label: "Stories & Reels" },
   { ratio: "1:1", label: "Square posts" },
@@ -10,14 +14,38 @@ const formats = [
   { ratio: "4:5", label: "Portrait feeds" }
 ];
 
+const structuredData = [
+  {
+    "@context": "https://schema.org",
+    "@type": "WebApplication",
+    name: "Mivim Video Resizer",
+    url: process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000",
+    applicationCategory: "MultimediaApplication",
+    operatingSystem: "Web",
+    description: "An online video resizer and aspect ratio converter that also converts video frame rates.",
+    featureList: ["Resize video aspect ratios", "Convert video frame rates", "Create 9:16, 1:1, 16:9, and 4:5 videos", "Preview and download MP4 video files"],
+    offers: { "@type": "Offer", price: "0", priceCurrency: "NGN" }
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "FAQPage",
+    mainEntity: [
+      { "@type": "Question", name: "What does Mivim Video Resizer do?", acceptedAnswer: { "@type": "Answer", text: "Mivim resizes videos into popular aspect ratios and converts a video from one frame rate to another for different platforms and playback needs." } },
+      { "@type": "Question", name: "Which video aspect ratios can Mivim create?", acceptedAnswer: { "@type": "Answer", text: "Mivim supports vertical 9:16, square 1:1, landscape 16:9, and portrait 4:5 video formats." } },
+      { "@type": "Question", name: "Can Mivim change video frame rate?", acceptedAnswer: { "@type": "Answer", text: "Yes. Mivim can keep the original frame rate or convert a video to 24, 30, or 60 frames per second." } }
+    ]
+  }
+];
+
 export default function HomePage() {
   return (
     <main className="min-h-screen bg-surface text-ink">
+      <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(structuredData) }} />
       <header className="absolute inset-x-0 top-0 z-20 border-b border-white/20 bg-night/75 text-white backdrop-blur-sm">
         <div className="mx-auto flex h-16 max-w-7xl items-center justify-between px-5 sm:px-8">
-          <Link href="/" className="flex items-center gap-2 font-semibold" aria-label="MiVim home">
+          <Link href="/" className="flex items-center gap-2 font-semibold" aria-label="Mivim home">
             <span className="grid h-9 w-9 place-items-center rounded-md bg-mivim-500 text-night"><Film className="h-5 w-5" /></span>
-            <span className="text-lg">MiVim</span>
+            <span className="text-lg">Mivim Video Resizer</span>
           </Link>
           <nav className="flex items-center gap-2" aria-label="Account">
             <Link className="rounded-md px-3 py-2 text-sm font-medium hover:bg-white/10" href="/login">Log in</Link>
@@ -40,14 +68,24 @@ export default function HomePage() {
           <div className="mx-auto max-w-7xl px-5 py-8 text-white sm:px-8 sm:py-10">
             <div className="max-w-3xl">
               <p className="text-sm font-semibold uppercase text-mivim-500">One video. Every format.</p>
-              <h1 className="mt-3 text-4xl font-semibold leading-tight sm:text-5xl lg:text-6xl">MiVim video aspect ratio converter</h1>
-              <p className="mt-4 max-w-2xl text-base leading-7 text-white/75 sm:text-lg">Turn videos into polished vertical, square, landscape, and portrait exports directly in your browser.</p>
+              <h1 className="mt-3 text-4xl font-semibold leading-tight sm:text-5xl lg:text-6xl">Mivim Video Resizer</h1>
+              <p className="mt-4 max-w-2xl text-base leading-7 text-white/75 sm:text-lg">Resize videos into polished vertical, square, landscape, and portrait formats, then choose the frame rate you need.</p>
               <div className="mt-6 flex flex-wrap gap-3">
                 <Link className="inline-flex h-12 items-center gap-2 rounded-md bg-mivim-500 px-5 font-semibold text-night hover:bg-white" href="/signup">Start converting <ArrowRight className="h-5 w-5" /></Link>
                 <Link className="inline-flex h-12 items-center rounded-md border border-white/35 px-5 font-semibold hover:bg-white/10" href="/login">Log in</Link>
                 <InstallButton />
               </div>
             </div>
+          </div>
+        </div>
+      </section>
+
+      <section className="border-b border-line bg-surface py-12 sm:py-14" aria-labelledby="about-mivim">
+        <div className="mx-auto grid max-w-7xl gap-4 px-5 sm:px-8 lg:grid-cols-[0.55fr_1.45fr] lg:items-start">
+          <p className="text-sm font-semibold text-mivim-600">About Mivim</p>
+          <div className="max-w-3xl">
+            <h2 id="about-mivim" className="text-2xl font-semibold sm:text-3xl">Resize the frame. Change the frame rate.</h2>
+            <p className="mt-3 leading-7 text-ink/65">Mivim Video Resizer converts a video from one aspect ratio or frame rate to another, helping you prepare the same footage for social feeds, stories, websites, and widescreen playback.</p>
           </div>
         </div>
       </section>
@@ -88,8 +126,20 @@ export default function HomePage() {
         </div>
       </section>
 
+      <section className="border-t border-line bg-mist py-14 sm:py-16" aria-labelledby="video-resizer-questions">
+        <div className="mx-auto max-w-7xl px-5 sm:px-8">
+          <p className="text-sm font-semibold text-mivim-600">Common questions</p>
+          <h2 id="video-resizer-questions" className="mt-2 text-3xl font-semibold">Video resizing, answered.</h2>
+          <div className="mt-8 grid gap-8 md:grid-cols-3">
+            <div><h3 className="font-semibold">What does Mivim do?</h3><p className="mt-2 text-sm leading-6 text-ink/65">Mivim resizes videos into popular aspect ratios and converts a video from one frame rate to another for different platforms and playback needs.</p></div>
+            <div><h3 className="font-semibold">Which aspect ratios are supported?</h3><p className="mt-2 text-sm leading-6 text-ink/65">Create vertical 9:16, square 1:1, landscape 16:9, and portrait 4:5 video formats.</p></div>
+            <div><h3 className="font-semibold">Can Mivim change video frame rate?</h3><p className="mt-2 text-sm leading-6 text-ink/65">Yes. Keep the original frame rate or convert your video to 24, 30, or 60 frames per second.</p></div>
+          </div>
+        </div>
+      </section>
+
       <footer className="border-t border-line bg-night py-7 text-white">
-        <div className="mx-auto flex max-w-7xl flex-col gap-3 px-5 text-sm text-white/60 sm:flex-row sm:items-center sm:justify-between sm:px-8"><p>MiVim</p><div className="flex gap-4"><Link href="/privacy" className="hover:text-white">Privacy</Link><Link href="/terms" className="hover:text-white">Terms</Link><a href={`mailto:${process.env.NEXT_PUBLIC_SUPPORT_EMAIL || "support@example.com"}`} className="hover:text-white">Support</a></div></div>
+        <div className="mx-auto flex max-w-7xl flex-col gap-3 px-5 text-sm text-white/60 sm:flex-row sm:items-center sm:justify-between sm:px-8"><p>Mivim Video Resizer</p><div className="flex gap-4"><Link href="/privacy" className="hover:text-white">Privacy</Link><Link href="/terms" className="hover:text-white">Terms</Link><a href={`mailto:${process.env.NEXT_PUBLIC_SUPPORT_EMAIL || "support@example.com"}`} className="hover:text-white">Support</a></div></div>
       </footer>
     </main>
   );

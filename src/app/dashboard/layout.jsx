@@ -5,6 +5,11 @@ import { WorkspaceProvider } from "@/contexts/workspace-context";
 import { NotificationProvider } from "@/contexts/notification-context";
 import { ThemeProvider } from "@/contexts/theme-context";
 
+export const metadata = {
+  title: "Dashboard",
+  robots: { index: false, follow: false }
+};
+
 export default function DashboardLayout({ children }) {
   return (
     <ThemeProvider>

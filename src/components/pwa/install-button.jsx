@@ -46,8 +46,8 @@ export function InstallButton({ compact = false }) {
       type="button"
       onClick={install}
       disabled={!installPrompt || installed}
-      aria-label={installed ? "MiVim is installed" : "Install MiVim app"}
-      title={installed ? "MiVim is installed" : installPrompt ? "Install MiVim app" : "Install option will appear when available"}
+      aria-label={installed ? "Mivim is installed" : "Install Mivim app"}
+      title={installed ? "Mivim is installed" : installPrompt ? "Install Mivim app" : "Install option will appear when available"}
       className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-line bg-surface px-2.5 text-sm font-medium text-ink transition hover:bg-mist disabled:cursor-default disabled:opacity-55 xl:px-3"
     >
       {installed ? <Check className="h-4 w-4" /> : <Download className="h-4 w-4" />}
@@ -64,10 +64,10 @@ export function InstallButton({ compact = false }) {
         className="inline-flex h-12 items-center gap-2 rounded-md border border-white/35 px-5 font-semibold text-white transition hover:bg-white/10 disabled:cursor-default disabled:opacity-60"
       >
         {installed ? <Check className="h-5 w-5" /> : <Download className="h-5 w-5" />}
-        {installed ? "MiVim installed" : "Install MiVim app"}
+        {installed ? "Mivim installed" : "Install Mivim app"}
       </button>
       <p className="max-w-sm text-sm text-white/65">
-        {installPrompt ? "Install MiVim app here for quick access from your device." : installed ? "Open MiVim anytime from your apps." : "Install MiVim from your browser menu when the install option appears."}
+        {installPrompt ? "Install Mivim app here for quick access from your device." : installed ? "Open Mivim anytime from your apps." : "Install Mivim from your browser menu when the install option appears."}
       </p>
     </div>
   );

@@ -1,6 +1,7 @@
-const cacheName = "mivim-shell-v1";
+const cacheName = "mivim-shell-v2";
 const appAssets = [
   "/",
+  "/favicon.svg",
   "/manifest.json",
   "/icons/mivim-192.png",
   "/icons/mivim-512.png",
