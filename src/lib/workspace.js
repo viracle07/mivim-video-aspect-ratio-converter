@@ -1,3 +1,5 @@
+import { paymentsEnabled } from "@/lib/billing-config";
+
 export const workspaceStorageKey = "mivim-workspace";
 const prototypeJobIds = new Set(["job_1042", "job_1041", "job_1038"]);
 
@@ -42,6 +44,7 @@ export function migrateWorkspace(workspace) {
 
 export function hasWorkspaceAccess(workspace) {
   if (!workspace) return false;
+  if (!paymentsEnabled) return true;
   if (["monthly", "yearly"].includes(workspace.plan) && workspace.billing?.status === "active") return true;
   return workspace.plan === "trial" && getFreeUploadsUsed(workspace) < freeUploadLimit;
 }

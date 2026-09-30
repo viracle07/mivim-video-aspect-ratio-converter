@@ -2,6 +2,7 @@ import { NextResponse } from "next/server";
 import { z } from "zod";
 import { rateLimit } from "@/lib/rate-limit";
 import { consumeConversionAccess, createNotification } from "@/lib/firebase-admin-rest";
+import { paymentsEnabled } from "@/lib/billing-config";
 
 const schema = z.object({
   fileName: z.string().min(1).max(180),
@@ -31,17 +32,19 @@ export async function POST(request) {
     return NextResponse.json({ error: "Invalid conversion request." }, { status: 400 });
   }
 
-  let access;
-  try {
-    access = await consumeConversionAccess(uid);
-  } catch (error) {
-    return NextResponse.json({ error: error.message || "Account access could not be checked." }, { status: 503 });
+  let access = { allowed: true, paid: false, freeAccess: true };
+  if (paymentsEnabled) {
+    try {
+      access = await consumeConversionAccess(uid);
+    } catch (error) {
+      return NextResponse.json({ error: error.message || "Account access could not be checked." }, { status: 503 });
+    }
   }
-  if (!access.allowed) {
+  if (paymentsEnabled && !access.allowed) {
     await createNotification(uid, { eventKey: "trial-exhausted", type: "trial", title: "Free uploads finished", message: "You have used all 3 free video uploads. Choose a plan to continue converting.", href: "/dashboard/billing" }).catch(() => {});
     return NextResponse.json({ error: "Your 3 free uploads have been used. Choose a plan from Billing to continue." }, { status: 402 });
   }
-  if (!access.paid && access.freeUploadsUsed === 3) {
+  if (paymentsEnabled && !access.paid && access.freeUploadsUsed === 3) {
     await createNotification(uid, { eventKey: "trial-exhausted", type: "trial", title: "This is your final free upload", message: "Your 3 free uploads are now used. Subscribe to continue after this conversion.", href: "/dashboard/billing" }).catch(() => {});
   }
 

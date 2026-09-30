@@ -1,6 +1,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { ArrowRight, Check, Film, LockKeyhole, MonitorPlay, Scissors } from "lucide-react";
+import { InstallButton } from "@/components/pwa/install-button";
 
 const formats = [
   { ratio: "9:16", label: "Stories & Reels" },
@@ -44,6 +45,7 @@ export default function HomePage() {
               <div className="mt-6 flex flex-wrap gap-3">
                 <Link className="inline-flex h-12 items-center gap-2 rounded-md bg-mivim-500 px-5 font-semibold text-night hover:bg-white" href="/signup">Start converting <ArrowRight className="h-5 w-5" /></Link>
                 <Link className="inline-flex h-12 items-center rounded-md border border-white/35 px-5 font-semibold hover:bg-white/10" href="/login">Log in</Link>
+                <InstallButton />
               </div>
             </div>
           </div>

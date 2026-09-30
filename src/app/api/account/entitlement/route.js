@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import { getEntitlement } from "@/lib/firebase-admin-rest";
+import { paymentsEnabled } from "@/lib/billing-config";
 
 export async function GET(request) {
   const uid = request.headers.get("X-MiVim-User");
@@ -15,6 +16,8 @@ export async function GET(request) {
       plan: paid ? entitlement.plan : "trial",
       status: entitlement.status,
       paid,
+      freeAccess: !paymentsEnabled,
+      paymentsEnabled,
       freeUploadsUsed: entitlement.freeUploadsUsed,
       freeUploadsRemaining: Math.max(0, 3 - entitlement.freeUploadsUsed),
       expiresAt

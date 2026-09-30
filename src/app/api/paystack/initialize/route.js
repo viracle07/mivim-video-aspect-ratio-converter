@@ -3,6 +3,7 @@ import { z } from "zod";
 import { appUrl } from "@/lib/env";
 import { getPaystackPlan, hasPaystackConfig, paystackRequest } from "@/lib/paystack";
 import { rateLimit } from "@/lib/rate-limit";
+import { paymentsEnabled } from "@/lib/billing-config";
 
 const schema = z.object({
   email: z.string().email().max(254),
@@ -10,6 +11,7 @@ const schema = z.object({
 });
 
 export async function POST(request) {
+  if (!paymentsEnabled) return NextResponse.json({ error: "Payments are paused while MiVim is free to use." }, { status: 503 });
   const uid = request.headers.get("x-mivim-user");
   const ip = request.headers.get("x-forwarded-for") || "local";
   if (!rateLimit(`paystack:${ip}`, 8).allowed) return NextResponse.json({ error: "Too many payment attempts." }, { status: 429 });

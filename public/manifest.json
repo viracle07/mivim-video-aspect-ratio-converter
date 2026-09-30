@@ -1,0 +1,32 @@
+{
+  "name": "MiVim Video Aspect Ratio Converter",
+  "short_name": "MiVim",
+  "description": "Convert videos into polished social media aspect ratios from an installable workspace.",
+  "start_url": "/dashboard",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#0f1417",
+  "theme_color": "#0d9488",
+  "orientation": "any",
+  "categories": ["photo", "video", "productivity"],
+  "icons": [
+    {
+      "src": "/icons/mivim-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/mivim-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icons/mivim-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    }
+  ]
+}
