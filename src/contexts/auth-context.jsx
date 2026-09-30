@@ -75,6 +75,17 @@ export function AuthProvider({ children }) {
       }
     })();
 
+    firebaseAuth.completeGoogleRedirect().then(async (redirectedUser) => {
+      if (!redirectedUser || !window.sessionStorage.getItem(googleRedirectKey)) return;
+      window.localStorage.setItem(authSourceKey, "firebase");
+      const nextUser = normalizeUser(redirectedUser, { provider: "google", emailVerified: true });
+      setUser(await persistUser(nextUser));
+      window.sessionStorage.removeItem(googleRedirectKey);
+      router.replace("/dashboard");
+    }).catch(() => {
+      window.sessionStorage.removeItem(googleRedirectKey);
+    });
+
     let unsubscribe = () => {};
     try {
       unsubscribe = firebaseAuth.watch(async (firebaseUser) => {
@@ -137,6 +148,8 @@ export function AuthProvider({ children }) {
       },
       async googleLogin() {
         window.sessionStorage.setItem(googleRedirectKey, "1");
+        const previousSource = window.localStorage.getItem(authSourceKey);
+        window.localStorage.setItem(authSourceKey, "firebase");
         try {
           const signedIn = await firebaseAuth.signInWithGoogle();
           if (!signedIn) return;
@@ -148,6 +161,8 @@ export function AuthProvider({ children }) {
           router.push("/dashboard");
         } catch (error) {
           window.sessionStorage.removeItem(googleRedirectKey);
+          if (previousSource) window.localStorage.setItem(authSourceKey, previousSource);
+          else window.localStorage.removeItem(authSourceKey);
           throw error;
         }
       },

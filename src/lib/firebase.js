@@ -5,6 +5,7 @@ import {
   GoogleAuthProvider,
   createUserWithEmailAndPassword,
   getAuth,
+  getRedirectResult,
   onAuthStateChanged,
   reload,
   sendEmailVerification,
@@ -57,6 +58,12 @@ export const firebaseAuth = {
     provider.setCustomParameters({ prompt: "select_account" });
     await signInWithRedirect(auth, provider);
     return null;
+  },
+  async completeGoogleRedirect() {
+    const auth = getFirebaseAuth();
+    if (!auth) return null;
+    const credential = await getRedirectResult(auth);
+    return credential?.user || null;
   },
   async resetPassword(email) {
     const auth = getFirebaseAuth();
