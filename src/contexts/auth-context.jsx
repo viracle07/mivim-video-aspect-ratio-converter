@@ -118,7 +118,7 @@ export function AuthProvider({ children }) {
     }
 
     return unsubscribe;
-  }, []);
+  }, [router]);
 
   const value = useMemo(
     () => ({
