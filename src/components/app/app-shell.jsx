@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 import { hasFirebaseConfig } from "@/lib/env";
 import { NotificationMenu } from "@/components/app/notification-menu";
 import { ThemeControl } from "@/components/app/theme-control";
+import { InstallButton } from "@/components/pwa/install-button";
 
 const nav = [
   { href: "/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -64,6 +65,7 @@ export function AppShell({ children }) {
               {!hasFirebaseConfig && <span className="hidden items-center gap-1 text-xs text-ink/45 sm:flex"><CloudOff className="h-3.5 w-3.5" />Local preview</span>}
             </div>
             <div className="flex items-center gap-3">
+              <InstallButton compact />
               <ThemeControl compact />
               <NotificationMenu />
               <span className="hidden text-sm text-ink/60 sm:inline">{user?.email}</span>

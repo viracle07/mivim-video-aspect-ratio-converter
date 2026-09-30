@@ -3,7 +3,7 @@
 import { useEffect, useState } from "react";
 import { Check, Download } from "lucide-react";
 
-export function InstallButton() {
+export function InstallButton({ compact = false }) {
   const [installPrompt, setInstallPrompt] = useState(null);
   const [installed, setInstalled] = useState(false);
 
@@ -11,9 +11,8 @@ export function InstallButton() {
     const standalone = window.matchMedia("(display-mode: standalone)").matches || window.navigator.standalone === true;
     setInstalled(standalone);
 
-    function capturePrompt(event) {
-      event.preventDefault();
-      setInstallPrompt(event);
+    function refreshPrompt() {
+      setInstallPrompt(window.__mivimInstallPrompt || null);
     }
 
     function markInstalled() {
@@ -21,11 +20,14 @@ export function InstallButton() {
       setInstallPrompt(null);
     }
 
-    window.addEventListener("beforeinstallprompt", capturePrompt);
+    refreshPrompt();
+    window.addEventListener("mivim-install-ready", refreshPrompt);
     window.addEventListener("appinstalled", markInstalled);
+    window.addEventListener("mivim-installed", markInstalled);
     return () => {
-      window.removeEventListener("beforeinstallprompt", capturePrompt);
+      window.removeEventListener("mivim-install-ready", refreshPrompt);
       window.removeEventListener("appinstalled", markInstalled);
+      window.removeEventListener("mivim-installed", markInstalled);
     };
   }, []);
 
@@ -33,8 +35,25 @@ export function InstallButton() {
     if (!installPrompt) return;
     await installPrompt.prompt();
     const choice = await installPrompt.userChoice;
-    if (choice.outcome === "accepted") setInstallPrompt(null);
+    if (choice.outcome === "accepted") {
+      window.__mivimInstallPrompt = null;
+      setInstallPrompt(null);
+    }
   }
+
+  if (compact) return (
+    <button
+      type="button"
+      onClick={install}
+      disabled={!installPrompt || installed}
+      aria-label={installed ? "MiVim is installed" : "Install MiVim app"}
+      title={installed ? "MiVim is installed" : installPrompt ? "Install MiVim app" : "Install option will appear when available"}
+      className="inline-flex h-9 items-center justify-center gap-2 rounded-md border border-line bg-surface px-2.5 text-sm font-medium text-ink transition hover:bg-mist disabled:cursor-default disabled:opacity-55 xl:px-3"
+    >
+      {installed ? <Check className="h-4 w-4" /> : <Download className="h-4 w-4" />}
+      <span className="hidden xl:inline">{installed ? "Installed" : "Install app"}</span>
+    </button>
+  );
 
   return (
     <div className="flex flex-col items-start gap-2">
