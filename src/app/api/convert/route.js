@@ -6,7 +6,7 @@ import { consumeConversionAccess, createNotification } from "@/lib/firebase-admi
 const schema = z.object({
   fileName: z.string().min(1).max(180),
   ratio: z.enum(["9:16", "1:1", "16:9", "4:5"]),
-  fitMode: z.enum(["blur", "solid"]).default("blur"),
+  fitMode: z.enum(["smart", "blur", "solid"]).default("smart"),
   quality: z.enum(["720p", "1080p"]).default("720p"),
   frameRate: z.enum(["original", "24", "30", "60"]).default("original"),
   backgroundColor: z.string().regex(/^#[0-9a-fA-F]{6}$/).default("#101418"),

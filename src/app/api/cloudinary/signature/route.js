@@ -3,7 +3,7 @@ import { z } from "zod";
 import { getCloudinaryConfig, hasCloudinaryConfig, signCloudinaryParams } from "@/lib/cloudinary";
 import { rateLimit } from "@/lib/rate-limit";
 
-const schema = z.object({ jobId: z.string().regex(/^job_[a-zA-Z0-9-]+$/) });
+const schema = z.object({ jobId: z.string().regex(/^job_[a-zA-Z0-9-]+$/), kind: z.enum(["source", "output"]).default("output") });
 
 export async function POST(request) {
   if (!hasCloudinaryConfig()) return NextResponse.json({ error: "Cloudinary is not configured." }, { status: 503 });
@@ -15,7 +15,7 @@ export async function POST(request) {
 
   const config = getCloudinaryConfig();
   const timestamp = Math.floor(Date.now() / 1000);
-  const folder = `${config.folder}/users/${userId}/outputs`;
+  const folder = `${config.folder}/users/${userId}/${parsed.data.kind === "source" ? "sources" : "outputs"}`;
   const publicId = parsed.data.jobId;
   const params = { folder, public_id: publicId, timestamp };
 

@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { useWorkspace } from "@/contexts/workspace-context";
 import { cancelVideoConversion, convertVideo } from "@/lib/video-converter";
 import { deleteJobVideos, getConvertedVideo } from "@/lib/video-storage";
-import { deleteCloudVideo, uploadConvertedVideo } from "@/lib/cloudinary-client";
+import { convertSmartVideo, deleteCloudVideo, uploadConvertedVideo } from "@/lib/cloudinary-client";
 
 export function JobActions({ job }) {
   const { removeJob, updateJob } = useWorkspace();
@@ -20,7 +20,8 @@ export function JobActions({ job }) {
     setBusy(true); setError("");
     updateJob(job.id, { status: "processing", progress: 1, error: "" });
     try {
-      const result = await convertVideo(job, (progress) => updateJob(job.id, { status: "processing", progress }));
+      const convert = job.fitMode === "smart" ? convertSmartVideo : convertVideo;
+      const result = await convert(job, (progress) => updateJob(job.id, { status: "processing", progress }));
       let cloud = null;
       let cloudError = "";
       try {
@@ -28,7 +29,7 @@ export function JobActions({ job }) {
       } catch (uploadError) {
         cloudError = uploadError.message || "Cloud backup was unavailable.";
       }
-      updateJob(job.id, { status: "completed", progress: 100, outputStored: true, outputName: result.outputName, outputBytes: result.outputSize, cloudUrl: cloud?.url || "", cloudPublicId: cloud?.publicId || "", cloudStatus: cloud ? "stored" : "local", cloudError, completedAt: new Date().toISOString() });
+      updateJob(job.id, { status: "completed", progress: 100, outputStored: true, outputName: result.outputName, outputBytes: result.outputSize, sourceCloudPublicId: result.sourcePublicId || "", cloudUrl: cloud?.url || "", cloudPublicId: cloud?.publicId || "", cloudStatus: cloud ? "stored" : "local", cloudError, completedAt: new Date().toISOString() });
       if (cloudError) setError(`Conversion completed and is stored on this device. Cloud backup: ${cloudError}`);
     } catch (conversionError) {
       const message = conversionError.message || "Conversion failed.";
@@ -64,6 +65,7 @@ export function JobActions({ job }) {
     setBusy(true);
     try {
       if (job.cloudPublicId) await deleteCloudVideo(job.cloudPublicId);
+      if (job.sourceCloudPublicId) await deleteCloudVideo(job.sourceCloudPublicId);
       await deleteJobVideos(job.id);
       removeJob(job.id);
     } catch {

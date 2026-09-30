@@ -14,8 +14,8 @@ export async function POST(request) {
   if (!userId) return NextResponse.json({ error: "Authentication required." }, { status: 401 });
   if (!rateLimit(`cloudinary-delete:${userId}`, 30).allowed) return NextResponse.json({ error: "Too many cloud deletion requests." }, { status: 429 });
   const config = getCloudinaryConfig();
-  const requiredPrefix = `${config.folder}/users/${userId}/outputs/`;
-  if (!parsed.data.publicId.startsWith(requiredPrefix)) return NextResponse.json({ error: "That video does not belong to this account." }, { status: 403 });
+  const allowedPrefixes = [`${config.folder}/users/${userId}/outputs/`, `${config.folder}/users/${userId}/sources/`];
+  if (!allowedPrefixes.some((prefix) => parsed.data.publicId.startsWith(prefix))) return NextResponse.json({ error: "That video does not belong to this account." }, { status: 403 });
 
   const timestamp = Math.floor(Date.now() / 1000);
   const params = { invalidate: "true", public_id: parsed.data.publicId, timestamp };

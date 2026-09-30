@@ -11,7 +11,7 @@ MiVim is a production-shaped Next.js SaaS application for uploading videos, fitt
 - Signed Cloudinary backups for completed outputs, with local fallback
 - Paystack subscriptions, verification, and signed webhooks
 - Browser-based FFmpeg video processing
-- Adaptive blurred or custom-colour canvases, 720p/1080p quality, and selectable frame rates
+- Cloudinary Smart Full Frame reframing with automatic subject tracking, 720p/1080p quality, and selectable frame rates
 - Protected dashboard, billing, upload, history, and admin areas
 - Three free video uploads per account, enforced server-side with Firestore
 - Server-verified paid conversion access tied to the signed-in Paystack customer
