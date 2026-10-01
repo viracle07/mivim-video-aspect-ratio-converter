@@ -1,8 +1,9 @@
 "use client";
 
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BarChart3, CloudOff, CreditCard, History, LayoutDashboard, LogOut, Shield, UploadCloud, UserRound } from "lucide-react";
+import { BarChart3, CloudOff, CreditCard, History, LayoutDashboard, LogOut, Menu, Shield, UploadCloud, UserRound, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { VerificationBanner } from "@/components/auth/verification-banner";
 import { useAuth } from "@/contexts/auth-context";
@@ -24,7 +25,10 @@ const nav = [
 export function AppShell({ children }) {
   const pathname = usePathname();
   const { user, logout } = useAuth();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const visibleNav = nav.filter((item) => item.label !== "Admin" || user?.role === "admin");
+
+  useEffect(() => setMobileMenuOpen(false), [pathname]);
 
   return (
     <div className="theme-adaptive min-h-screen bg-mist">
@@ -57,14 +61,14 @@ export function AppShell({ children }) {
         </nav>
       </aside>
       <div className="lg:pl-72">
-        <header className="sticky top-0 z-20 border-b border-line bg-surface/92 backdrop-blur">
-          <div className="flex h-16 items-center justify-between px-5 lg:px-8">
-            <div className="flex items-center gap-3">
+        <header className="sticky top-0 z-40 border-b border-line bg-surface/95 backdrop-blur">
+          <div className="flex h-14 items-center justify-between gap-3 px-3 sm:h-16 sm:px-5 lg:px-8">
+            <div className="flex min-w-0 items-center gap-2 sm:gap-3">
               <BarChart3 className="h-5 w-5 text-mivim-600" />
-              <span className="font-medium">Creator workspace</span>
+              <span className="truncate font-medium"><span className="sm:hidden">Mivim</span><span className="hidden sm:inline">Creator workspace</span></span>
               {!hasFirebaseConfig && <span className="hidden items-center gap-1 text-xs text-ink/45 sm:flex"><CloudOff className="h-3.5 w-3.5" />Local preview</span>}
             </div>
-            <div className="flex items-center gap-3">
+            <div className="hidden items-center gap-3 sm:flex">
               <InstallButton compact />
               <ThemeControl compact />
               <NotificationMenu />
@@ -74,17 +78,30 @@ export function AppShell({ children }) {
                 Sign out
               </Button>
             </div>
+            <div className="flex shrink-0 items-center gap-2 sm:hidden">
+              <NotificationMenu />
+              <button type="button" onClick={() => setMobileMenuOpen((open) => !open)} className="grid h-9 w-9 place-items-center rounded-md border border-line bg-surface text-ink/70" aria-label={mobileMenuOpen ? "Close account menu" : "Open account menu"} aria-expanded={mobileMenuOpen}>
+                {mobileMenuOpen ? <X className="h-4 w-4" /> : <Menu className="h-4 w-4" />}
+              </button>
+            </div>
           </div>
+          {mobileMenuOpen && (
+            <div className="absolute inset-x-3 top-[calc(100%+0.5rem)] rounded-md border border-line bg-surface p-4 shadow-soft sm:hidden">
+              <p className="truncate text-sm font-medium">{user?.email}</p>
+              <div className="mt-4 flex flex-wrap items-center gap-3"><InstallButton compact /><ThemeControl /></div>
+              <Button className="mt-4 w-full" variant="secondary" size="sm" onClick={logout}><LogOut className="h-4 w-4" />Sign out</Button>
+            </div>
+          )}
         </header>
-        <main className="px-5 py-6 pb-24 lg:px-8 lg:pb-8">
+        <main className="px-3 py-5 pb-24 sm:px-5 sm:py-6 lg:px-8 lg:pb-8">
           <VerificationBanner />
           {children}
         </main>
-        <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-line bg-surface px-2 pb-[env(safe-area-inset-bottom)] lg:hidden">
+        <nav className="fixed inset-x-0 bottom-0 z-30 grid grid-cols-5 border-t border-line bg-surface px-1 pb-[env(safe-area-inset-bottom)] lg:hidden">
           {visibleNav.filter((item) => item.label !== "Admin").map((item) => {
             const Icon = item.icon;
             const active = item.href === "/dashboard" ? pathname === item.href : pathname.startsWith(item.href);
-            return <Link key={item.href} href={item.href} className={cn("flex min-h-16 flex-col items-center justify-center gap-1 text-xs font-medium", active ? "text-mivim-600" : "text-ink/55")}><Icon className="h-5 w-5" /><span>{item.label}</span></Link>;
+            return <Link key={item.href} href={item.href} className={cn("flex min-h-16 min-w-0 flex-col items-center justify-center gap-1 px-0.5 text-[10px] font-medium sm:text-xs", active ? "text-mivim-600" : "text-ink/55")}><Icon className="h-5 w-5" /><span className="max-w-full truncate">{item.label}</span></Link>;
           })}
         </nav>
       </div>

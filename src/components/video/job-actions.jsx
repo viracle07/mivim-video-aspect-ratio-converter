@@ -81,5 +81,5 @@ export function JobActions({ job }) {
   }
 
   if (!job.sourceStorage) return <div className="flex items-center gap-2"><span className="text-xs text-ink/45">Demo job</span>{deleteButton}</div>;
-  return <div><div className="flex gap-2">{busy ? <Button variant="danger" size="sm" onClick={cancelConversion}>Cancel</Button> : <Button variant="secondary" size="sm" onClick={processVideo} disabled={job.status === "processing"}>{job.status === "processing" ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}{job.status === "failed" ? "Retry" : job.status === "processing" ? "Converting" : "Convert"}</Button>}{deleteButton}</div>{(error || job.error) && <p className="mt-2 max-w-44 text-xs text-coral">{error || job.error}</p>}</div>;
+  return <div><div className="flex gap-2">{busy ? <Button variant="danger" size="sm" onClick={cancelConversion}>Cancel</Button> : <Button variant="secondary" size="sm" onClick={processVideo} disabled={job.status === "processing"}>{job.status === "processing" ? <LoaderCircle className="h-4 w-4 animate-spin" /> : <Play className="h-4 w-4" />}{job.status === "failed" ? "Retry" : job.status === "processing" ? "Converting" : "Click to convert"}</Button>}{deleteButton}</div>{(error || job.error) && <p className="mt-2 max-w-44 text-xs text-coral">{error || job.error}</p>}</div>;
 }
