@@ -19,7 +19,12 @@ import { firebaseConfig, hasFirebaseConfig } from "@/lib/env";
 
 export function getFirebaseApp() {
   if (!hasFirebaseConfig) return null;
-  return getApps().length ? getApps()[0] : initializeApp(firebaseConfig);
+  if (getApps().length) return getApps()[0];
+  const sameDomainAuth = typeof window !== "undefined" && !["localhost", "127.0.0.1"].includes(window.location.hostname);
+  return initializeApp({
+    ...firebaseConfig,
+    authDomain: sameDomainAuth ? window.location.host : firebaseConfig.authDomain
+  });
 }
 
 export function getFirebaseServices() {

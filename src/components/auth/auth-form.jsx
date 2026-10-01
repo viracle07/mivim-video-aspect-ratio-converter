@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { Chrome, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -11,9 +10,8 @@ import { useAuth } from "@/contexts/auth-context";
 import { hasFirebaseConfig } from "@/lib/env";
 
 export function AuthForm({ mode }) {
-  const isSignup = mode === "signup";
   const isAdmin = mode === "admin";
-  const { user, loading, login, signup, googleLogin, resetPassword } = useAuth();
+  const { user, loading, authError, login, googleLogin } = useAuth();
   const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -21,95 +19,41 @@ export function AuthForm({ mode }) {
   const [busy, setBusy] = useState(false);
 
   useEffect(() => {
-    if (mode !== "login" || loading || !user) return;
-    const requestedPath = new URLSearchParams(window.location.search).get("next");
-    const nextPath = requestedPath?.startsWith("/") && !requestedPath.startsWith("//") ? requestedPath : "/dashboard";
-    router.replace(nextPath);
-    router.refresh();
-  }, [loading, mode, router, user]);
-
-  async function handleSubmit(event) {
-    event.preventDefault();
-    setBusy(true);
-    setMessage("");
-    try {
-      if (mode === "reset") {
-        await resetPassword(email);
-        setMessage("Password reset email sent.");
-      } else if (isSignup) {
-        await signup(email, password);
-      } else {
-        const requestedPath = new URLSearchParams(window.location.search).get("next");
-        const nextPath = requestedPath?.startsWith("/") && !requestedPath.startsWith("//") ? requestedPath : "/dashboard";
-        await login(email, password, isAdmin ? "/dashboard/admin" : nextPath, isAdmin);
-      }
-    } catch (error) {
-      setMessage(error.message || "Something went wrong.");
-    } finally {
-      setBusy(false);
-    }
-  }
+    if (!isAdmin && !loading && user) { router.replace("/dashboard"); router.refresh(); }
+  }, [isAdmin, loading, router, user]);
 
   async function handleGoogleLogin() {
     setBusy(true);
     setMessage("");
-    try {
-      const requestedPath = new URLSearchParams(window.location.search).get("next");
-      const nextPath = requestedPath?.startsWith("/") && !requestedPath.startsWith("//") ? requestedPath : "/dashboard";
-      await googleLogin(nextPath);
-    } catch (error) {
-      const setupErrors = ["auth/internal-error", "auth/operation-not-allowed", "auth/unauthorized-domain"];
-      setMessage(setupErrors.includes(error.code)
-        ? "Google sign-in is not enabled for this website. Check the Google provider and authorized domains in Firebase Authentication."
-        : error.message || "Google sign-in could not be completed.");
-    } finally {
-      setBusy(false);
-    }
+    try { await googleLogin(); }
+    catch (error) { setMessage(error.message || "Google sign-in could not be started."); setBusy(false); }
+  }
+
+  async function handleAdminLogin(event) {
+    event.preventDefault();
+    setBusy(true);
+    setMessage("");
+    try { await login(email, password, "/dashboard/admin", true); }
+    catch (error) { setMessage(error.message || "Administrator login failed."); setBusy(false); }
   }
 
   return (
     <Card className="mx-auto w-full max-w-md">
       <CardHeader>
-        <h1 className="text-2xl font-semibold">{isSignup ? "Create your account" : mode === "reset" ? "Reset password" : isAdmin ? "Administrator sign in" : "Welcome back"}</h1>
-        <p className="mt-1 text-sm text-ink/60">
-          {isSignup ? "Start using Mivim Video Resizer and verify your email." : mode === "reset" ? "We will send reset instructions." : isAdmin ? "Access Mivim platform operations." : "Log in to continue converting videos."}
-        </p>
+        <h1 className="text-2xl font-semibold">{isAdmin ? "Administrator sign in" : "Continue to Mivim"}</h1>
+        <p className="mt-1 text-sm text-ink/60">{isAdmin ? "Access Mivim platform operations." : "Use your Google account to access the video resizer."}</p>
       </CardHeader>
       <CardContent>
-        {!hasFirebaseConfig && <p className="mb-4 rounded-md border border-amber/40 bg-amber/15 px-3 py-2 text-sm text-ink/70">Local preview mode is active. Account data stays in this browser until Firebase is connected.</p>}
-        <form className="space-y-4" onSubmit={handleSubmit}>
-          <label className="block text-sm font-medium">
-            Email
-            <Input className="mt-2" type="email" value={email} onChange={(event) => setEmail(event.target.value)} required />
-          </label>
-          {mode !== "reset" && (
-            <label className="block text-sm font-medium">
-              Password
-              <Input className="mt-2" type="password" value={password} onChange={(event) => setPassword(event.target.value)} minLength={8} required />
-            </label>
-          )}
-          {message && <p className="rounded-md bg-amber/20 px-3 py-2 text-sm text-ink/75">{message}</p>}
-          <Button className="w-full" disabled={busy}>
-            <Mail className="h-4 w-4" />
-            {busy ? "Working..." : isSignup ? "Create account" : mode === "reset" ? "Send reset email" : isAdmin ? "Sign in as administrator" : "Log in"}
-          </Button>
-        </form>
-        {mode !== "reset" && !isAdmin && (
-          <Button className="mt-3 w-full" variant="secondary" onClick={handleGoogleLogin} disabled={!hasFirebaseConfig || busy} title={!hasFirebaseConfig ? "Connect Firebase to enable Google sign-in" : undefined}>
-            <Chrome className="h-4 w-4" />
-            Continue with Google
-          </Button>
+        {(message || authError) && <p className="mb-4 rounded-md bg-amber/20 px-3 py-2 text-sm text-ink/75">{message || authError}</p>}
+        {isAdmin ? (
+          <form className="space-y-4" onSubmit={handleAdminLogin}>
+            <label className="block text-sm font-medium">Email<Input className="mt-2" type="email" value={email} onChange={(event) => setEmail(event.target.value)} required /></label>
+            <label className="block text-sm font-medium">Password<Input className="mt-2" type="password" value={password} onChange={(event) => setPassword(event.target.value)} minLength={8} required /></label>
+            <Button className="w-full" disabled={busy}><Mail className="h-4 w-4" />{busy ? "Signing in..." : "Sign in as administrator"}</Button>
+          </form>
+        ) : (
+          <Button className="w-full" onClick={handleGoogleLogin} disabled={!hasFirebaseConfig || busy || loading}><Chrome className="h-4 w-4" />{busy ? "Opening Google..." : "Continue with Google"}</Button>
         )}
-        <div className="mt-5 flex justify-between text-sm">
-          <Link className="text-mivim-600" href={isSignup ? "/login" : isAdmin ? "/login" : "/signup"}>
-            {isSignup ? "Already have an account?" : isAdmin ? "Creator sign in" : "Create account"}
-          </Link>
-          {mode !== "reset" && !isAdmin && (
-            <Link className="text-ink/60" href="/reset-password">
-              Forgot password?
-            </Link>
-          )}
-        </div>
       </CardContent>
     </Card>
   );

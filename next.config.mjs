@@ -27,11 +27,23 @@ const securityHeaders = [
 
 /** @type {import('next').NextConfig} */
 const nextConfig = {
+  async rewrites() {
+    return [{ source: "/__/auth/:path*", destination: "/api/firebase-auth/:path*" }];
+  },
   async headers() {
     const headers = process.env.NODE_ENV === "production"
       ? [...securityHeaders, { key: "Strict-Transport-Security", value: "max-age=63072000; includeSubDomains; preload" }]
       : securityHeaders;
-    return [{ source: "/(.*)", headers }];
+    return [
+      { source: "/((?!__/auth/).*)", headers },
+      {
+        source: "/__/auth/:path*",
+        headers: [
+          { key: "X-Content-Type-Options", value: "nosniff" },
+          { key: "Referrer-Policy", value: "strict-origin-when-cross-origin" }
+        ]
+      }
+    ];
   }
 };
 

@@ -1,218 +1,95 @@
 "use client";
 
-import { createContext, useContext, useEffect, useMemo, useState } from "react";
-import { useRouter } from "next/navigation";
+import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import { demoUser } from "@/lib/mock-data";
 import { firebaseAuth } from "@/lib/firebase";
-import { hasFirebaseConfig } from "@/lib/env";
 
 const AuthContext = createContext(null);
-const storageKey = "mivim-user";
-const authSourceKey = "mivim-auth-source";
-const googleRedirectKey = "mivim-google-redirect";
-const googleRedirectPathKey = "mivim-google-redirect-path";
-let pendingSession = null;
-
-function getSafeRedirectPath() {
-  const path = window.sessionStorage.getItem(googleRedirectPathKey);
-  return path?.startsWith("/") && !path.startsWith("//") ? path : "/dashboard";
-}
-
-function finishGoogleRedirect(router) {
-  const path = getSafeRedirectPath();
-  window.sessionStorage.removeItem(googleRedirectKey);
-  window.sessionStorage.removeItem(googleRedirectPathKey);
-  router.replace(path);
-  router.refresh();
-}
 
 function normalizeUser(firebaseUser, fallback = {}) {
   const email = firebaseUser?.email || fallback.email || demoUser.email;
-  return {
-    ...demoUser,
-    ...fallback,
-    uid: firebaseUser?.uid || fallback.uid || `local-${email}`,
-    email,
-    displayName: firebaseUser?.displayName || fallback.displayName || email.split("@")[0],
-    emailVerified: Boolean(firebaseUser?.emailVerified ?? fallback.emailVerified),
-    provider: fallback.provider || "password"
-  };
+  return { ...demoUser, ...fallback, uid: firebaseUser?.uid || fallback.uid, email, displayName: firebaseUser?.displayName || fallback.displayName || email.split("@")[0], emailVerified: Boolean(firebaseUser?.emailVerified ?? fallback.emailVerified), provider: fallback.provider || "google" };
 }
 
-async function persistUser(user, firebaseUser = null) {
-  if (pendingSession?.uid === user.uid) return pendingSession.promise;
-  const promise = (async () => {
-    const idToken = await firebaseAuth.getIdToken(firebaseUser, true);
-    if (!idToken || idToken.split(".").length !== 3) {
-      throw new Error("Google sign-in did not return a valid identity token. Please try again.");
-    }
-    const response = await fetch("/api/auth/session", {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ uid: user.uid, email: user.email, idToken })
-    });
-    const text = await response.text();
-    let result = {};
-    try { result = text ? JSON.parse(text) : {}; } catch { result = {}; }
-    if (!response.ok) throw new Error(result.error || "The secure session service is unavailable. Please try again.");
-    const nextUser = { ...user, role: result.role };
-    window.localStorage.setItem(storageKey, JSON.stringify(nextUser));
-    return nextUser;
-  })();
-  pendingSession = { uid: user.uid, promise };
-  try { return await promise; } finally { if (pendingSession?.promise === promise) pendingSession = null; }
+function safeNextPath(value) {
+  return value?.startsWith("/") && !value.startsWith("//") ? value : "/dashboard";
 }
 
-function clearPersistedUser() {
-  window.localStorage.removeItem(storageKey);
-  window.localStorage.removeItem(authSourceKey);
+async function createFirebaseSession(firebaseUser) {
+  const idToken = await firebaseAuth.getIdToken(firebaseUser, true);
+  const response = await fetch("/api/auth/session", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ uid: firebaseUser.uid, email: firebaseUser.email, idToken }) });
+  const result = await response.json().catch(() => ({}));
+  if (!response.ok) throw new Error(result.error || "Google sign-in could not be completed.");
+  return normalizeUser(firebaseUser, { role: result.role, provider: "google", emailVerified: true });
 }
 
 export function AuthProvider({ children }) {
   const [user, setUser] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [authError, setAuthError] = useState("");
   const router = useRouter();
+  const pathname = usePathname();
+
+  const enterApp = useCallback((nextUser) => {
+    setUser(nextUser);
+    setAuthError("");
+    if (pathname === "/login" || pathname === "/signup") {
+      router.replace(safeNextPath(new URLSearchParams(window.location.search).get("next")));
+      router.refresh();
+    }
+  }, [pathname, router]);
 
   useEffect(() => {
-    const stored = typeof window !== "undefined" ? window.localStorage.getItem(storageKey) : null;
-    const restorePromise = (async () => {
-      if (!stored) return;
-      const storedUser = JSON.parse(stored);
-      try {
-        const response = await fetch("/api/auth/session", { cache: "no-store" });
-        const result = await response.json();
-        if (!response.ok || !result.authenticated) throw new Error("Session expired");
-        const nextUser = { ...storedUser, ...result.user };
-        window.localStorage.setItem(storageKey, JSON.stringify(nextUser));
-        setUser(nextUser);
-        return true;
-      } catch {
-        clearPersistedUser();
-        return false;
-      }
-    })();
-
-    // Resolve Firebase's redirect state before treating an empty auth observer as
-    // a signed-out user. The observer below owns persistence and navigation.
-    const googleRedirectPromise = firebaseAuth.completeGoogleRedirect().catch(() => null);
-
+    let active = true;
     let unsubscribe = () => {};
-    try {
+
+    async function startAuth() {
+      try {
+        await firebaseAuth.completeGoogleRedirect();
+      } catch (error) {
+        if (active) setAuthError(error.message || "Google sign-in could not be completed.");
+      }
       unsubscribe = firebaseAuth.watch(async (firebaseUser) => {
-        if (window.localStorage.getItem(authSourceKey) === "server") {
-          await restorePromise;
-          setLoading(false);
-          return;
-        }
-        if (firebaseUser) {
-          const nextUser = normalizeUser(firebaseUser);
-          try {
-            setUser(await persistUser(nextUser, firebaseUser));
-            if (window.sessionStorage.getItem(googleRedirectKey)) {
-              finishGoogleRedirect(router);
-            }
-          } catch { setUser(null); }
-        } else {
-          const redirectedUser = await googleRedirectPromise;
-          if (redirectedUser) {
-            const nextUser = normalizeUser(redirectedUser, { provider: "google", emailVerified: true });
-            try {
-              setUser(await persistUser(nextUser, redirectedUser));
-              finishGoogleRedirect(router);
-              setLoading(false);
-              return;
-            } catch { setUser(null); }
+        if (!active) return;
+        try {
+          if (firebaseUser) {
+            enterApp(await createFirebaseSession(firebaseUser));
+          } else {
+            const response = await fetch("/api/auth/session", { cache: "no-store" });
+            const result = await response.json().catch(() => ({}));
+            setUser(response.ok && result.authenticated ? normalizeUser(null, result.user) : null);
           }
-          const restored = await restorePromise;
-          if (hasFirebaseConfig && !restored) {
-            await fetch("/api/auth/session", { method: "DELETE" }).catch(() => {});
-            clearPersistedUser();
-            setUser(null);
-          }
+        } catch (error) {
+          setUser(null);
+          setAuthError(error.message || "Google sign-in could not be completed.");
+        } finally {
+          if (active) setLoading(false);
         }
-        setLoading(false);
       });
-    } catch {
-      restorePromise.finally(() => setLoading(false));
     }
 
-    return unsubscribe;
-  }, [router]);
+    startAuth();
+    return () => { active = false; unsubscribe(); };
+  }, [enterApp]);
 
-  const value = useMemo(
-    () => ({
-      user,
-      loading,
-      async login(email, password, nextPath = "/dashboard", requireAdmin = false) {
-        const response = await fetch("/api/auth/login", {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ email, password, admin: requireAdmin })
-        });
-        const signedIn = await response.json();
-        if (!response.ok) throw new Error(signedIn.error || "Login failed.");
-        const sessionUser = normalizeUser(signedIn, signedIn);
-        window.localStorage.setItem(storageKey, JSON.stringify(sessionUser));
-        window.localStorage.setItem(authSourceKey, "server");
-        setUser(sessionUser);
-        router.push(nextPath);
-      },
-      async signup(email, password) {
-        const signedUp = await firebaseAuth.signUp(email, password);
-        const nextUser = normalizeUser(signedUp, { email, displayName: email.split("@")[0], emailVerified: signedUp.emailVerified ?? false });
-        const sessionUser = await persistUser(nextUser);
-        window.localStorage.setItem(authSourceKey, "firebase");
-        setUser(sessionUser);
-        router.push("/verify-email");
-      },
-      async googleLogin(nextPath = "/dashboard") {
-        window.sessionStorage.setItem(googleRedirectKey, "1");
-        window.sessionStorage.setItem(
-          googleRedirectPathKey,
-          nextPath?.startsWith("/") && !nextPath.startsWith("//") ? nextPath : "/dashboard"
-        );
-        const previousSource = window.localStorage.getItem(authSourceKey);
-        window.localStorage.setItem(authSourceKey, "firebase");
-        try {
-          const signedIn = await firebaseAuth.signInWithGoogle();
-          if (!signedIn) return;
-          const nextUser = normalizeUser(signedIn, { provider: "google", emailVerified: true });
-          const sessionUser = await persistUser(nextUser, signedIn);
-          window.localStorage.setItem(authSourceKey, "firebase");
-          setUser(sessionUser);
-          finishGoogleRedirect(router);
-        } catch (error) {
-          window.sessionStorage.removeItem(googleRedirectKey);
-          window.sessionStorage.removeItem(googleRedirectPathKey);
-          if (previousSource) window.localStorage.setItem(authSourceKey, previousSource);
-          else window.localStorage.removeItem(authSourceKey);
-          throw error;
-        }
-      },
-      async resetPassword(email) {
-        return firebaseAuth.resetPassword(email);
-      },
-      async resendVerification() {
-        await firebaseAuth.resendVerification();
-        return true;
-      },
-      async refreshUser() {
-        const refreshed = await firebaseAuth.refreshUser();
-        const nextUser = normalizeUser(refreshed, { ...user, emailVerified: refreshed?.emailVerified ?? user?.emailVerified });
-        const sessionUser = await persistUser(nextUser);
-        setUser(sessionUser);
-        return sessionUser;
-      },
-      async logout() {
-        await firebaseAuth.signOut();
-        await fetch("/api/auth/session", { method: "DELETE" });
-        clearPersistedUser();
-        setUser(null);
-        router.push("/");
-      }
-    }),
-    [loading, router, user]
-  );
+  const value = useMemo(() => ({
+    user,
+    loading,
+    authError,
+    async googleLogin() { setAuthError(""); await firebaseAuth.signInWithGoogle(); },
+    async login(email, password, nextPath = "/dashboard", requireAdmin = false) {
+      const response = await fetch("/api/auth/login", { method: "POST", headers: { "Content-Type": "application/json" }, body: JSON.stringify({ email, password, admin: requireAdmin }) });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok) throw new Error(result.error || "Login failed.");
+      setUser(normalizeUser(null, result));
+      router.replace(safeNextPath(nextPath));
+      router.refresh();
+    },
+    async logout() { await firebaseAuth.signOut(); await fetch("/api/auth/session", { method: "DELETE" }); setUser(null); router.replace("/"); router.refresh(); },
+    async resendVerification() { return true; },
+    async refreshUser() { return user; }
+  }), [authError, loading, router, user]);
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 }
