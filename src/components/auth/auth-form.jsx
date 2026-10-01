@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { Chrome, Mail } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader } from "@/components/ui/card";
@@ -12,11 +13,20 @@ import { hasFirebaseConfig } from "@/lib/env";
 export function AuthForm({ mode }) {
   const isSignup = mode === "signup";
   const isAdmin = mode === "admin";
-  const { login, signup, googleLogin, resetPassword } = useAuth();
+  const { user, loading, login, signup, googleLogin, resetPassword } = useAuth();
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [message, setMessage] = useState("");
   const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    if (mode !== "login" || loading || !user) return;
+    const requestedPath = new URLSearchParams(window.location.search).get("next");
+    const nextPath = requestedPath?.startsWith("/") && !requestedPath.startsWith("//") ? requestedPath : "/dashboard";
+    router.replace(nextPath);
+    router.refresh();
+  }, [loading, mode, router, user]);
 
   async function handleSubmit(event) {
     event.preventDefault();
@@ -44,7 +54,9 @@ export function AuthForm({ mode }) {
     setBusy(true);
     setMessage("");
     try {
-      await googleLogin();
+      const requestedPath = new URLSearchParams(window.location.search).get("next");
+      const nextPath = requestedPath?.startsWith("/") && !requestedPath.startsWith("//") ? requestedPath : "/dashboard";
+      await googleLogin(nextPath);
     } catch (error) {
       const setupErrors = ["auth/internal-error", "auth/operation-not-allowed", "auth/unauthorized-domain"];
       setMessage(setupErrors.includes(error.code)

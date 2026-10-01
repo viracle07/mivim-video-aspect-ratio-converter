@@ -10,7 +10,21 @@ const AuthContext = createContext(null);
 const storageKey = "mivim-user";
 const authSourceKey = "mivim-auth-source";
 const googleRedirectKey = "mivim-google-redirect";
+const googleRedirectPathKey = "mivim-google-redirect-path";
 let pendingSession = null;
+
+function getSafeRedirectPath() {
+  const path = window.sessionStorage.getItem(googleRedirectPathKey);
+  return path?.startsWith("/") && !path.startsWith("//") ? path : "/dashboard";
+}
+
+function finishGoogleRedirect(router) {
+  const path = getSafeRedirectPath();
+  window.sessionStorage.removeItem(googleRedirectKey);
+  window.sessionStorage.removeItem(googleRedirectPathKey);
+  router.replace(path);
+  router.refresh();
+}
 
 function normalizeUser(firebaseUser, fallback = {}) {
   const email = firebaseUser?.email || fallback.email || demoUser.email;
@@ -75,16 +89,9 @@ export function AuthProvider({ children }) {
       }
     })();
 
-    firebaseAuth.completeGoogleRedirect().then(async (redirectedUser) => {
-      if (!redirectedUser || !window.sessionStorage.getItem(googleRedirectKey)) return;
-      window.localStorage.setItem(authSourceKey, "firebase");
-      const nextUser = normalizeUser(redirectedUser, { provider: "google", emailVerified: true });
-      setUser(await persistUser(nextUser));
-      window.sessionStorage.removeItem(googleRedirectKey);
-      router.replace("/dashboard");
-    }).catch(() => {
-      window.sessionStorage.removeItem(googleRedirectKey);
-    });
+    // Resolve Firebase's redirect state before treating an empty auth observer as
+    // a signed-out user. The observer below owns persistence and navigation.
+    const googleRedirectPromise = firebaseAuth.completeGoogleRedirect().catch(() => null);
 
     let unsubscribe = () => {};
     try {
@@ -99,11 +106,20 @@ export function AuthProvider({ children }) {
           try {
             setUser(await persistUser(nextUser));
             if (window.sessionStorage.getItem(googleRedirectKey)) {
-              window.sessionStorage.removeItem(googleRedirectKey);
-              router.replace("/dashboard");
+              finishGoogleRedirect(router);
             }
           } catch { setUser(null); }
         } else {
+          const redirectedUser = await googleRedirectPromise;
+          if (redirectedUser) {
+            const nextUser = normalizeUser(redirectedUser, { provider: "google", emailVerified: true });
+            try {
+              setUser(await persistUser(nextUser));
+              finishGoogleRedirect(router);
+              setLoading(false);
+              return;
+            } catch { setUser(null); }
+          }
           const restored = await restorePromise;
           if (hasFirebaseConfig && !restored) {
             await fetch("/api/auth/session", { method: "DELETE" }).catch(() => {});
@@ -146,8 +162,12 @@ export function AuthProvider({ children }) {
         setUser(sessionUser);
         router.push("/verify-email");
       },
-      async googleLogin() {
+      async googleLogin(nextPath = "/dashboard") {
         window.sessionStorage.setItem(googleRedirectKey, "1");
+        window.sessionStorage.setItem(
+          googleRedirectPathKey,
+          nextPath?.startsWith("/") && !nextPath.startsWith("//") ? nextPath : "/dashboard"
+        );
         const previousSource = window.localStorage.getItem(authSourceKey);
         window.localStorage.setItem(authSourceKey, "firebase");
         try {
@@ -156,11 +176,11 @@ export function AuthProvider({ children }) {
           const nextUser = normalizeUser(signedIn, { provider: "google", emailVerified: true });
           const sessionUser = await persistUser(nextUser);
           window.localStorage.setItem(authSourceKey, "firebase");
-          window.sessionStorage.removeItem(googleRedirectKey);
           setUser(sessionUser);
-          router.push("/dashboard");
+          finishGoogleRedirect(router);
         } catch (error) {
           window.sessionStorage.removeItem(googleRedirectKey);
+          window.sessionStorage.removeItem(googleRedirectPathKey);
           if (previousSource) window.localStorage.setItem(authSourceKey, previousSource);
           else window.localStorage.removeItem(authSourceKey);
           throw error;
