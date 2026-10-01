@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { z } from "zod";
-import { adminEmails, firebaseConfig, hasFirebaseConfig } from "@/lib/env";
+import { adminEmails, hasFirebaseConfig } from "@/lib/env";
+import { verifyFirebaseIdToken } from "@/lib/firebase-admin";
 import { rateLimit } from "@/lib/rate-limit";
 import { createSessionToken, sessionCookieOptions } from "@/lib/session";
 import { verifySessionToken } from "@/lib/session";
@@ -10,24 +11,6 @@ const schema = z.object({
   uid: z.string().min(1).max(180),
   idToken: z.string().min(20).max(5000).nullable().optional()
 });
-
-async function verifyFirebaseIdentity(idToken) {
-  try {
-    const response = await fetch(`https://identitytoolkit.googleapis.com/v1/accounts:lookup?key=${encodeURIComponent(firebaseConfig.apiKey)}`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ idToken }),
-      cache: "no-store",
-      signal: AbortSignal.timeout(10000)
-    });
-    if (!response.ok) return null;
-    const result = await response.json();
-    return result.users?.[0] || null;
-  } catch (error) {
-    console.error("Firebase identity verification failed", error.message);
-    throw new Error("Firebase identity verification is temporarily unavailable.");
-  }
-}
 
 export async function POST(request) {
   const ip = request.headers.get("x-forwarded-for") || "local";
@@ -42,12 +25,20 @@ export async function POST(request) {
   if (hasFirebaseConfig) {
     if (!parsed.data.idToken) return NextResponse.json({ error: "Firebase authentication is required." }, { status: 401 });
     let verified;
-    try { verified = await verifyFirebaseIdentity(parsed.data.idToken); }
-    catch (error) { return NextResponse.json({ error: error.message }, { status: 503 }); }
-    if (!verified || verified.localId !== parsed.data.uid || verified.email?.toLowerCase() !== parsed.data.email.toLowerCase()) {
+    try { verified = await verifyFirebaseIdToken(parsed.data.idToken); }
+    catch (error) {
+      console.error("Firebase ID token verification failed", error.code || error.message);
+      const configurationError = error.message === "Firebase Admin credentials are not configured.";
+      return NextResponse.json({
+        error: configurationError
+          ? "Google sign-in is not configured on the server."
+          : "Google sign-in could not be verified. Please try again."
+      }, { status: configurationError ? 503 : 401 });
+    }
+    if (!verified || verified.uid !== parsed.data.uid || verified.email?.toLowerCase() !== parsed.data.email.toLowerCase()) {
       return NextResponse.json({ error: "Authentication could not be verified." }, { status: 401 });
     }
-    identity = { uid: verified.localId, email: verified.email };
+    identity = { uid: verified.uid, email: verified.email };
   } else if (process.env.NODE_ENV === "production") {
     return NextResponse.json({ error: "Firebase must be configured in production." }, { status: 503 });
   }
