@@ -19,5 +19,5 @@ function getAdminApp() {
 }
 
 export async function verifyFirebaseIdToken(idToken) {
-  return getAuth(getAdminApp()).verifyIdToken(idToken, true);
+  return getAuth(getAdminApp()).verifyIdToken(idToken);
 }

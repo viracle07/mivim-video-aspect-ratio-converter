@@ -39,10 +39,13 @@ function normalizeUser(firebaseUser, fallback = {}) {
   };
 }
 
-async function persistUser(user) {
+async function persistUser(user, firebaseUser = null) {
   if (pendingSession?.uid === user.uid) return pendingSession.promise;
   const promise = (async () => {
-    const idToken = await firebaseAuth.getIdToken();
+    const idToken = await firebaseAuth.getIdToken(firebaseUser, true);
+    if (!idToken || idToken.split(".").length !== 3) {
+      throw new Error("Google sign-in did not return a valid identity token. Please try again.");
+    }
     const response = await fetch("/api/auth/session", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
@@ -104,7 +107,7 @@ export function AuthProvider({ children }) {
         if (firebaseUser) {
           const nextUser = normalizeUser(firebaseUser);
           try {
-            setUser(await persistUser(nextUser));
+            setUser(await persistUser(nextUser, firebaseUser));
             if (window.sessionStorage.getItem(googleRedirectKey)) {
               finishGoogleRedirect(router);
             }
@@ -114,7 +117,7 @@ export function AuthProvider({ children }) {
           if (redirectedUser) {
             const nextUser = normalizeUser(redirectedUser, { provider: "google", emailVerified: true });
             try {
-              setUser(await persistUser(nextUser));
+              setUser(await persistUser(nextUser, redirectedUser));
               finishGoogleRedirect(router);
               setLoading(false);
               return;
@@ -174,7 +177,7 @@ export function AuthProvider({ children }) {
           const signedIn = await firebaseAuth.signInWithGoogle();
           if (!signedIn) return;
           const nextUser = normalizeUser(signedIn, { provider: "google", emailVerified: true });
-          const sessionUser = await persistUser(nextUser);
+          const sessionUser = await persistUser(nextUser, signedIn);
           window.localStorage.setItem(authSourceKey, "firebase");
           setUser(sessionUser);
           finishGoogleRedirect(router);

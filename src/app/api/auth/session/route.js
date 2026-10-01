@@ -27,7 +27,7 @@ export async function POST(request) {
     let verified;
     try { verified = await verifyFirebaseIdToken(parsed.data.idToken); }
     catch (error) {
-      console.error("Firebase ID token verification failed", error.code || error.message);
+      console.error("Firebase ID token verification failed", error.code, error.message);
       const configurationError = error.message === "Firebase Admin credentials are not configured.";
       return NextResponse.json({
         error: configurationError

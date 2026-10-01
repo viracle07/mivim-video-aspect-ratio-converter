@@ -11,7 +11,6 @@ import {
   sendEmailVerification,
   sendPasswordResetEmail,
   signInWithEmailAndPassword,
-  signInWithPopup,
   signInWithRedirect,
   signOut
 } from "@firebase/auth";
@@ -57,14 +56,8 @@ export const firebaseAuth = {
     if (!auth) return { email: "google-user@example.com", displayName: "Google User", emailVerified: true };
     const provider = new GoogleAuthProvider();
     provider.setCustomParameters({ prompt: "select_account" });
-    try {
-      const credential = await signInWithPopup(auth, provider);
-      return credential.user;
-    } catch (error) {
-      if (error?.code !== "auth/popup-blocked") throw error;
-      await signInWithRedirect(auth, provider);
-      return null;
-    }
+    await signInWithRedirect(auth, provider);
+    return null;
   },
   async completeGoogleRedirect() {
     const auth = getFirebaseAuth();
@@ -96,9 +89,10 @@ export const firebaseAuth = {
     await signOut(auth);
     return true;
   },
-  async getIdToken() {
+  async getIdToken(user = null, forceRefresh = false) {
     const auth = getFirebaseAuth();
-    return auth?.currentUser ? auth.currentUser.getIdToken() : null;
+    const authenticatedUser = user || auth?.currentUser;
+    return authenticatedUser ? authenticatedUser.getIdToken(forceRefresh) : null;
   },
   watch(callback) {
     const auth = getFirebaseAuth();
